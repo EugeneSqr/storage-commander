@@ -1,0 +1,15 @@
+[MESSAGES CONTROL]
+
+disable=missing-module-docstring,
+        missing-class-docstring,
+        missing-function-docstring,
+        too-few-public-methods,
+        logging-fstring-interpolation,
+        c-extension-no-member,
+        broad-except,
+
+[SIMILARITIES]
+ignore-imports=yes
+
+[BASIC]
+good-names=e,qs,dt
