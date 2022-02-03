@@ -10,18 +10,20 @@ _CONTEXT_FILE = '.context'
 def context():
     '''Which environment, storage, service or owner to use.'''
 
-# TODO: add choise options for storage and environment
-# TODO: context show invoke group without command https://click.palletsprojects.com/en/8.0.x/commands/#group-invocation-without-command
 @context.command()
-@click.option('--environment', help='Environment where a storage is deployed.')
-@click.option('--storage', help='Storage type name.')
+@click.option('--environment',
+              type=click.Choice(['qa', 'prod'], case_sensitive=False),
+              help='Environment where a storage is deployed.')
+@click.option('--storage',
+              type=click.Choice(['fcc', 'cx'], case_sensitive=False),
+              help='Storage type name.')
 @click.option('--service', help='Name of the service to which files belong.')
 @click.option('--user', help='Name of the user which owns the files.')
 @click.pass_context
-def use(context, **kwargs):
+def use(ctx, **kwargs):
     '''Set context for subsequent operations.'''
-    context.storcom_context.update(**kwargs)
-    print(context.storcom_context.save())
+    ctx.obj.update(**kwargs)
+    print(ctx.obj.save())
 
 class Context():
     def __init__(self, **kwargs):
@@ -32,7 +34,7 @@ class Context():
         return self
 
     def save(self):
-        with open(_CONTEXT_FILE, 'w+') as f:
+        with open(_CONTEXT_FILE, 'w+', encoding='utf-8') as f:
             for key, value in self.__dict__.items():
                 f.write(f'{key}={value}{os.linesep}')
         return self
@@ -41,7 +43,7 @@ class Context():
     def load(cls):
         if not Path(_CONTEXT_FILE).is_file():
             return Context()
-        with open(_CONTEXT_FILE) as f:
+        with open(_CONTEXT_FILE, encoding='utf-8') as f:
             return Context(**dict(line.rstrip().split('=') for line in f))
 
     def __repr__(self):

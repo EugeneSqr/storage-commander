@@ -12,4 +12,4 @@ disable=missing-module-docstring,
 ignore-imports=yes
 
 [BASIC]
-good-names=e,qs,dt
+good-names=e,qs,dt,f
