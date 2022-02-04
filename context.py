@@ -25,6 +25,12 @@ def use(ctx, **kwargs):
     ctx.obj.update(**kwargs)
     print(ctx.obj.save())
 
+@context.command()
+@click.pass_context
+def show(ctx):
+    '''Show current context.'''
+    print(ctx.obj)
+
 class Context():
     def __init__(self, **kwargs):
         self.__dict__.update(**kwargs)
