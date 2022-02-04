@@ -19,17 +19,17 @@ def context():
               help='Storage type name.')
 @click.option('--service', help='Name of the service to which files belong.')
 @click.option('--user', help='Name of the user which owns the files.')
-@click.pass_context
-def use(ctx, **kwargs):
+@click.pass_obj
+def use(storcom_ctx, **kwargs):
     '''Set context for subsequent operations.'''
-    ctx.obj.update(**kwargs)
-    print(ctx.obj.save())
+    storcom_ctx.update(**kwargs)
+    print(storcom_ctx.save())
 
 @context.command()
-@click.pass_context
-def show(ctx):
+@click.pass_obj
+def show(storcom_ctx):
     '''Show current context.'''
-    print(ctx.obj)
+    print(storcom_ctx)
 
 class Context():
     def __init__(self, **kwargs):
