@@ -1,5 +1,8 @@
-# TODO: reading config by context should happen here
-# TODO: add OOP stuff
+from abc import ABCMeta, abstractmethod
+
 class BaseStorage():
-    def __init__(self, context):
-        self._context = context
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def list_files(self):
+        pass

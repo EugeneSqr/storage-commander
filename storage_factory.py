@@ -6,4 +6,4 @@ def get_storage(context):
         return FccStorage(context)
     if context.storage == 'cx':
         return CxStorage(context)
-    raise Exception(f'No storage for {context.storage}')
+    return None

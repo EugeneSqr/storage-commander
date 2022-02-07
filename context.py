@@ -33,7 +33,13 @@ def show(storcom_ctx):
 
 class Context():
     def __init__(self, **kwargs):
-        self.__dict__.update(**kwargs)
+        self.__dict__.update({
+            'environment': None,
+            'storage': None,
+            'service': None,
+            'user': None,
+            **kwargs,
+        })
 
     def update(self, **kwargs):
         self.__dict__.update({k: v for k, v in kwargs.items() if v})
