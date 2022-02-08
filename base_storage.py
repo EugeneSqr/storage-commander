@@ -6,3 +6,6 @@ class BaseStorage():
     @abstractmethod
     def list_files(self):
         pass
+
+class StorageInitError(Exception):
+    pass
