@@ -42,7 +42,7 @@ class Context():
         })
 
     def update(self, **kwargs):
-        self.__dict__.update({k: v for k, v in kwargs.items() if v})
+        self.__dict__.update({k: v for k, v in kwargs.items() if v is not None})
         return self
 
     def save(self):

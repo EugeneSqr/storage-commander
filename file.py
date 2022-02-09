@@ -1,7 +1,7 @@
 import click
 from click import ClickException
 
-from base_storage import StorageInitError
+from base_storage import StorageInitError, StorageInteractionError
 from cx_storage import CxStorage
 from fcc_storage import FccStorage
 
@@ -15,13 +15,29 @@ def file(ctx):
 @click.pass_obj
 def ll(storage):
     '''List files in a human-readable format.'''
-    print('files', storage.list_files())
+    try:
+        # TODO: implement tabular output
+        print(storage.list_files())
+    except StorageInteractionError as e:
+        raise ClickException(e) from e
 
 @file.command()
 @click.pass_obj
 def ls(storage):
     '''List files as raw JSON.'''
-    print(storage)
+    try:
+        print(storage.list_files())
+    except StorageInteractionError as e:
+        raise ClickException(e) from e
+
+@click.argument('file_id')
+@click.pass_obj
+def show(storage, file_id):
+    '''Show file details by id provided as an argument.'''
+    try:
+        print(storage.file_details(file_id))
+    except StorageInteractionError as e:
+        raise ClickException(e) from e
 
 @file.command()
 @click.pass_obj

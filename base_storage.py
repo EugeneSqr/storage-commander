@@ -9,3 +9,6 @@ class BaseStorage():
 
 class StorageInitError(Exception):
     pass
+
+class StorageInteractionError(Exception):
+    pass

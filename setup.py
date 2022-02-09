@@ -5,7 +5,7 @@ setup(
     version='0.0.1',
     py_modules=['storage_commander'],
     install_requires=[
-        'Click',
+        'Click', 'requests',
     ],
     entry_points={
         'console_scripts': [
