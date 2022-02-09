@@ -5,6 +5,7 @@ from base_storage import BaseStorage, StorageInitError, StorageInteractionError
 from config import config
 
 _TIMEOUT = 10
+_TABULAR_HEADERS = ['id', 'name']
 
 class FccStorage(BaseStorage):
     def __init__(self, context):
@@ -13,18 +14,32 @@ class FccStorage(BaseStorage):
 
     def file_details(self, file_id):
         # TODO: implement me
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def list_files(self):
+        return self._request_files_list().text
+
+    def list_files_tabular(self):
+        response = self._request_files_list()
+        try:
+            files_list = response.json()['items']
+        except Exception as e:
+            raise StorageInteractionError('Invalid file list JSON.') from e
+
+        headers = ['id', 'name']
+        return [_extract_file_values(f, headers) for f in files_list], headers
+
+    def _request_files_list(self):
         try:
             response = requests.get(f'{self._storage_url}/files',
                                     params=self._params(),
                                     auth=_CxAuth(self._token),
                                     timeout=_TIMEOUT)
             response.raise_for_status()
-            return response.text
+            return response
         except RequestException as e:
             raise StorageInteractionError("Can't get list of files.") from e
+
 
     @staticmethod
     def _read_config(context):
@@ -49,6 +64,9 @@ class FccStorage(BaseStorage):
         if self._owner:
             params['owner'] = self._owner
         return params
+
+def _extract_file_values(file, headers):
+    return [v for k, v in file.items() if k in headers]
 
 class _CxAuth(AuthBase):
     def __init__(self, token):

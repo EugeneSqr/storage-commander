@@ -1,5 +1,6 @@
 import click
 from click import ClickException
+from tabulate import tabulate
 
 from base_storage import StorageInitError, StorageInteractionError
 from cx_storage import CxStorage
@@ -17,7 +18,9 @@ def ll(storage):
     '''List files in a human-readable format.'''
     try:
         # TODO: implement tabular output
-        print(storage.list_files())
+        # print(tabulate([['Alice', 24], ['Bob', 19]], headers=['Name', 'Age']))
+        rows, headers = storage.list_files_tabular()
+        print(tabulate(rows, headers=headers))
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
