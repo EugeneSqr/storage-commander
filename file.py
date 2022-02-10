@@ -35,18 +35,22 @@ def ls(storage):
 @click.argument('file_id')
 @click.pass_obj
 def show(storage, file_id):
-    '''Show file details by id provided as an argument.'''
+    '''Show file details by FILE_ID provided as an argument.'''
     try:
         print(storage.file_details(file_id))
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
 @file.command()
+@click.argument('file_ids', nargs=-1)
 @click.pass_obj
-def rm(storage):
-    '''Delete files.'''
-    # TODO: implement with multiple files as arguments
-    raise ClickException('Not implemented')
+def rm(storage, file_ids):
+    '''Delete files by their FILE_IDS.'''
+    for file_id in file_ids:
+        try:
+            storage.delete_file(file_id)
+        except StorageInteractionError as e:
+            raise ClickException(e) from e
 
 def _get_storage(context):
     try:

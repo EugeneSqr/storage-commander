@@ -14,7 +14,7 @@ class FccStorage(BaseStorage):
 
     def file_details(self, file_id):
         try:
-            return self._make_request('GET',f'{self._storage_url}/files/{file_id}').text
+            return self._make_request('GET', f'{self._storage_url}/files/{file_id}').text
         except RequestException as e:
             raise StorageInteractionError(f"Can't get file details for {file_id}") from e
 
@@ -29,6 +29,12 @@ class FccStorage(BaseStorage):
             raise StorageInteractionError('Invalid file list JSON.') from e
 
         return [_extract_file_values(f, _TABULAR_HEADERS) for f in files_list], _TABULAR_HEADERS
+
+    def delete_file(self, file_id):
+        try:
+            return self._make_request('DELETE', f'{self._storage_url}/files/{file_id}')
+        except RequestException as e:
+            raise StorageInteractionError(f"Can't delete file {file_id}") from e
 
     def _request_files_list(self):
         try:
