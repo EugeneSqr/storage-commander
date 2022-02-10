@@ -5,7 +5,7 @@ from base_storage import BaseStorage, StorageInitError, StorageInteractionError
 from config import config
 
 _TIMEOUT = 10
-_TABULAR_HEADERS = ['id', 'name', 'purpose', 'threshold_include', 'date_changed']
+_TABULAR_HEADERS = ['id', 'name', 'batch', 'purpose', 'threshold_include', 'date_changed']
 
 class FccStorage(BaseStorage):
     def __init__(self, context):
@@ -13,8 +13,10 @@ class FccStorage(BaseStorage):
         self._owner = context.user
 
     def file_details(self, file_id):
-        # TODO: implement me
-        raise NotImplementedError()
+        try:
+            return self._make_request('GET',f'{self._storage_url}/files/{file_id}').text
+        except RequestException as e:
+            raise StorageInteractionError(f"Can't get file details for {file_id}") from e
 
     def list_files(self):
         return self._request_files_list().text
@@ -30,14 +32,22 @@ class FccStorage(BaseStorage):
 
     def _request_files_list(self):
         try:
-            response = requests.get(f'{self._storage_url}/files',
-                                    params=self._params(),
-                                    auth=_CxAuth(self._token),
-                                    timeout=_TIMEOUT)
+            response = self._make_request('GET',
+                                          f'{self._storage_url}/files',
+                                          params={
+                                              'ordering': '-date_changed',
+                                              **self._owner_param(),
+                                          })
             response.raise_for_status()
             return response
         except RequestException as e:
             raise StorageInteractionError("Can't get list of files.") from e
+
+    def _make_request(self, method, url, **kwargs):
+        response = requests.request(
+            method, url, auth=_CxAuth(self._token), timeout=_TIMEOUT, **kwargs)
+        response.raise_for_status()
+        return response
 
     @staticmethod
     def _read_config(context):
@@ -57,13 +67,8 @@ class FccStorage(BaseStorage):
             raise StorageInitError(f'Storage token missing for service: {context.service}')
         return storage_url, service_token
 
-    def _params(self):
-        params = {
-            'ordering': '-date_changed',
-        }
-        if self._owner:
-            params['owner'] = self._owner
-        return params
+    def _owner_param(self):
+        return {'owner': self._owner} if self._owner else {}
 
 def _extract_file_values(file, headers):
     return [file.get(header, '') for header in headers]
