@@ -17,10 +17,8 @@ def file(ctx):
 def ll(storage):
     '''List files in a human-readable format.'''
     try:
-        # TODO: implement tabular output
-        # print(tabulate([['Alice', 24], ['Bob', 19]], headers=['Name', 'Age']))
         rows, headers = storage.list_files_tabular()
-        print(tabulate(rows, headers=headers))
+        print(tabulate(rows, headers=headers, tablefmt='presto'))
     except StorageInteractionError as e:
         raise ClickException(e) from e
 

@@ -5,7 +5,7 @@ from base_storage import BaseStorage, StorageInitError, StorageInteractionError
 from config import config
 
 _TIMEOUT = 10
-_TABULAR_HEADERS = ['id', 'name']
+_TABULAR_HEADERS = ['id', 'name', 'purpose', 'threshold_include', 'date_changed']
 
 class FccStorage(BaseStorage):
     def __init__(self, context):
@@ -26,8 +26,7 @@ class FccStorage(BaseStorage):
         except Exception as e:
             raise StorageInteractionError('Invalid file list JSON.') from e
 
-        headers = ['id', 'name']
-        return [_extract_file_values(f, headers) for f in files_list], headers
+        return [_extract_file_values(f, _TABULAR_HEADERS) for f in files_list], _TABULAR_HEADERS
 
     def _request_files_list(self):
         try:
@@ -39,7 +38,6 @@ class FccStorage(BaseStorage):
             return response
         except RequestException as e:
             raise StorageInteractionError("Can't get list of files.") from e
-
 
     @staticmethod
     def _read_config(context):
@@ -60,13 +58,15 @@ class FccStorage(BaseStorage):
         return storage_url, service_token
 
     def _params(self):
-        params = {}
+        params = {
+            'ordering': '-date_changed',
+        }
         if self._owner:
             params['owner'] = self._owner
         return params
 
 def _extract_file_values(file, headers):
-    return [v for k, v in file.items() if k in headers]
+    return [file.get(header, '') for header in headers]
 
 class _CxAuth(AuthBase):
     def __init__(self, token):
