@@ -1,8 +1,11 @@
 import json
 import os
 from pathlib import Path
+from collections import OrderedDict
 
 import click
+
+from config import contexts
 
 _CONTEXT_FILE = '.context'
 
@@ -19,10 +22,11 @@ def context():
               help='Storage type name.')
 @click.option('--service', help='Name of the service to which files belong.')
 @click.option('--user', help='Name of the user which owns the files.')
+@click.argument('name', required=False)
 @click.pass_obj
-def use(storcom_ctx, **kwargs):
-    '''Set context for subsequent operations.'''
-    storcom_ctx.update(**kwargs)
+def use(storcom_ctx, name, **kwargs):
+    '''Set context for subsequent operations by NAME or by explicitly setting each parameter.'''
+    storcom_ctx.update(name, **kwargs)
     print(storcom_ctx.save())
 
 @context.command()
@@ -41,8 +45,12 @@ class Context():
             **kwargs,
         })
 
-    def update(self, **kwargs):
-        self.__dict__.update({k: v for k, v in kwargs.items() if v is not None})
+    def update(self, name, **kwargs):
+        kwargs = {
+            **Context.parse_named_context(name),
+            **_remove_empty(kwargs),
+        }
+        self.__dict__.update(kwargs)
         return self
 
     def save(self):
@@ -58,5 +66,23 @@ class Context():
         with open(_CONTEXT_FILE, encoding='utf-8') as f:
             return Context(**dict(line.rstrip().split('=') for line in f))
 
+    @classmethod
+    def parse_named_context(cls, name):
+        kwargs = OrderedDict({
+            'environment': None,
+            'storage': None,
+            'service': None,
+            'user': None,
+        })
+        values = (contexts.get(name) or '').split(':')
+        if len(values) > 1:
+            keys = list(kwargs.keys())
+            for index, value in enumerate(values):
+                kwargs[keys[index]] = value
+        return _remove_empty(kwargs)
+
     def __repr__(self):
         return json.dumps(self.__dict__)
+
+def _remove_empty(kwargs):
+    return {k:v for k,v in kwargs.items() if v is not None}
