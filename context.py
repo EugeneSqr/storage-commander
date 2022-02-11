@@ -9,6 +9,9 @@ from config import contexts
 
 _CONTEXT_FILE = '.context'
 
+def complete_context_name(_, __, ___):
+    return list(contexts.keys())
+
 @click.group()
 def context():
     '''Which environment, storage, service or owner to use.'''
@@ -22,7 +25,7 @@ def context():
               help='Storage type name.')
 @click.option('--service', help='Name of the service to which files belong.')
 @click.option('--user', help='Name of the user which owns the files.')
-@click.argument('name', required=False)
+@click.argument('name', required=False, shell_complete=complete_context_name)
 @click.pass_obj
 def use(storcom_ctx, name, **kwargs):
     '''Set context for subsequent operations by NAME or by explicitly setting each parameter.'''
@@ -47,8 +50,8 @@ class Context():
 
     def update(self, name, **kwargs):
         kwargs = {
-            **Context.parse_named_context(name),
-            **_remove_empty(kwargs),
+            **Context._parse_named_context(name),
+            **Context._remove_empty(kwargs),
         }
         self.__dict__.update(kwargs)
         return self
@@ -67,7 +70,7 @@ class Context():
             return Context(**dict(line.rstrip().split('=') for line in f))
 
     @classmethod
-    def parse_named_context(cls, name):
+    def _parse_named_context(cls, name):
         kwargs = OrderedDict({
             'environment': None,
             'storage': None,
@@ -79,10 +82,11 @@ class Context():
             keys = list(kwargs.keys())
             for index, value in enumerate(values):
                 kwargs[keys[index]] = value
-        return _remove_empty(kwargs)
+        return Context._remove_empty(kwargs)
+
+    @classmethod
+    def _remove_empty(cls, kwargs):
+        return {k:v for k,v in kwargs.items() if v is not None}
 
     def __repr__(self):
         return json.dumps(self.__dict__)
-
-def _remove_empty(kwargs):
-    return {k:v for k,v in kwargs.items() if v is not None}
