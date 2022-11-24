@@ -27,6 +27,7 @@ class FccStorage(BaseStorage):
             'name',
             'batch',
             'purpose',
+            'parent_file_id',
             'threshold_include',
             'date_changed',
         ]

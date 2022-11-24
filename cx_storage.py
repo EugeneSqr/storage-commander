@@ -29,6 +29,7 @@ class CxStorage(BaseStorage):
             'mime_type',
             'file_bytes',
             'content_duration',
+            'parent_file_sid',
             'date_modified',
         ]
 
