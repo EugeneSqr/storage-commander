@@ -1,7 +1,7 @@
 from requests.exceptions import RequestException
 
-from base_storage import BaseStorage, StorageInteractionError
-from cx_auth import CxAuth
+from storcom.base_storage import BaseStorage, StorageInteractionError
+from storcom.cx_auth import CxAuth
 
 class CxStorage(BaseStorage):
     def __init__(self, context):

@@ -1,15 +1,16 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='storcom',
     version='0.0.1',
-    py_modules=['storage_commander'],
+    packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         'Click', 'requests', 'tabulate',
     ],
     entry_points={
         'console_scripts': [
-            'storcom = storage_commander:storcom',
+            'storcom = storcom.storage_commander:storcom',
         ],
     },
 )

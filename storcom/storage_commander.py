@@ -1,7 +1,7 @@
 import click
 
-from context import context as context_command, Context
-from file import file as file_command
+from storcom.context import context as context_command, Context
+from storcom.file import file as file_command
 
 @click.group()
 @click.pass_context

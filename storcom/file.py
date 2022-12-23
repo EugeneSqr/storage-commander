@@ -2,9 +2,9 @@ import click
 from click import ClickException
 from tabulate import tabulate
 
-from base_storage import StorageInitError, StorageInteractionError
-from cx_storage import CxStorage
-from fcc_storage import FccStorage
+from storcom.base_storage import StorageInitError, StorageInteractionError
+from storcom.cx_storage import CxStorage
+from storcom.fcc_storage import FccStorage
 
 @click.group()
 @click.pass_context
