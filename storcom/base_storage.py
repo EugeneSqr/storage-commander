@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 import requests
 
-from config import config
+import storcom.config as cfg
 
 _TIMEOUT = 10
 
@@ -45,20 +45,21 @@ class BaseStorage():
 
     @staticmethod
     def _read_config(context):
+        config = cfg.read()
         if context.environment not in config:
-            raise StorageInitError(f'No config for environment: {context.environment}')
+            raise config.StorageInitError(f'No config for environment: {context.environment}')
         if context.storage not in config[context.environment]:
-            raise StorageInitError(f'No config for storage: {context.storage}')
+            raise config.StorageInitError(f'No config for storage: {context.storage}')
         storage_config = config[context.environment][context.storage]
         storage_url = storage_config.get('storage_url')
         if not storage_url:
-            raise StorageInitError(f'No storage_url configured for storage {context.storage}')
+            raise config.StorageInitError(f'No storage_url for storage {context.storage}')
         if not context.service:
-            raise StorageInitError(f'No service specified for storage: {context.storage}')
+            raise config.StorageInitError(f'No service for storage: {context.storage}')
         tokens = storage_config.get('tokens') or {}
         service_token = tokens.get(context.service)
         if not service_token:
-            raise StorageInitError(f'Storage token missing for service: {context.service}')
+            raise config.StorageInitError(f'Storage token missing for service: {context.service}')
         return storage_url, service_token
 
     @staticmethod
@@ -66,9 +67,6 @@ class BaseStorage():
         response = requests.request(method, url, timeout=_TIMEOUT, **kwargs)
         response.raise_for_status()
         return response
-
-class StorageInitError(Exception):
-    pass
 
 class StorageInteractionError(Exception):
     pass

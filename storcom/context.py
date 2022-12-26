@@ -5,9 +5,13 @@ from collections import OrderedDict
 
 import click
 
-from config import contexts
+from storcom import config
 
 _CONTEXT_FILE = '.context'
+
+# TODO: find safer way to read configs
+# TODO: postpone contexts initialization
+contexts = config.read()['contexts']
 
 def complete_context_name(_, __, ___):
     return list(contexts.keys())

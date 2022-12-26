@@ -3,7 +3,7 @@ __pycache__/
 
 *.egg-info
 
-config.py
+config.toml
 
 build
 
