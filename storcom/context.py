@@ -11,6 +11,9 @@ from storcom import config
 _CONTEXT_FILE = '.context'
 
 try:
+    # a better way would be passing all data to autocompletion handler as a context,
+    # however there is a bug in click which always creates new context instead of grabbing
+    # the one from the command. See https://github.com/pallets/click/issues/2303
     shortcuts = config.read_shortcuts()
 except config.ConfigError as e:
     click.echo(e.message, err=True)
