@@ -6,6 +6,7 @@ from storcom.base_storage import StorageInteractionError
 from storcom.config import ConfigError
 from storcom.cx_storage import CxStorage
 from storcom.fcc_storage import FccStorage
+from storcom.config import read_storage_config
 
 @click.group()
 @click.pass_context
@@ -55,11 +56,11 @@ def rm(storage, file_ids):
 
 def _get_storage(context):
     try:
-        # TODO: read config here, pass it to storage
-        if context.storage == 'fcc':
-            return FccStorage(context)
-        if context.storage == 'cx':
-            return CxStorage(context)
-        raise ClickException(f'No storage for context: {context}')
+        config = read_storage_config(context)
     except ConfigError as e:
         raise ClickException(e) from e
+    if context.storage == 'fcc':
+        return FccStorage(config, context)
+    if context.storage == 'cx':
+        return CxStorage(config, context)
+    raise ClickException(f'No storage for context: {context}')

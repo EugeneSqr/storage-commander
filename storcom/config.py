@@ -19,11 +19,7 @@ def read_storage_config(context):
     return storage_url, service_token
 
 def read_contexts():
-    try:
-        contexts = _read_decode_config().get('contexts', {})
-    except ConfigError:
-        contexts = {}
-    return contexts
+    return _read_decode_config().get('contexts', {})
 
 def _read_decode_config():
     config_file_path = 'config.toml'
@@ -36,4 +32,6 @@ def _read_decode_config():
         raise ConfigError(f'Unable to decode {config_file_path}: {e}') from e
 
 class ConfigError(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__()
+        self.message = message

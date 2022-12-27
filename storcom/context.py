@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from pathlib import Path
 from collections import OrderedDict
 
@@ -9,8 +10,15 @@ from storcom import config
 
 _CONTEXT_FILE = '.context'
 
+# TODO: consider reading config earlier
+try:
+    contexts = config.read_contexts()
+except config.ConfigError as e:
+    click.ClickException(e.message).show()
+    sys.exit(click.ClickException.exit_code)
+
 def complete_context_name(_, __, incomplete):
-    return [name for name in config.read_contexts().keys() if name.startswith(incomplete)]
+    return [name for name in contexts.keys() if name.startswith(incomplete)]
 
 @click.group()
 def context():
@@ -77,7 +85,7 @@ class Context():
             'service': None,
             'user': None,
         })
-        values = (config.read_contexts().get(name) or '').split(':')
+        values = (contexts.get(name) or '').split(':')
         if len(values) > 1:
             keys = list(kwargs.keys())
             for index, value in enumerate(values):
