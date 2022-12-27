@@ -9,9 +9,8 @@ from storcom import config
 
 _CONTEXT_FILE = '.context'
 
-def complete_context_name(_, __, ___):
-    # TODO: account for input text to filter out unmatched contexts
-    return list(config.read_contexts().keys())
+def complete_context_name(_, __, incomplete):
+    return [name for name in config.read_contexts().keys() if name.startswith(incomplete)]
 
 @click.group()
 def context():
