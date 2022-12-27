@@ -12,7 +12,11 @@ from storcom.config import read_storage_config
 @click.pass_context
 def file(ctx):
     '''Work with files.'''
-    ctx.obj = _get_storage(ctx.obj)
+    try:
+        config = read_storage_config(ctx.obj)
+    except ConfigError as e:
+        raise ClickException(e) from e
+    ctx.obj = _get_storage(config, ctx.obj)
 
 @file.command()
 @click.pass_obj
@@ -54,11 +58,7 @@ def rm(storage, file_ids):
         except StorageInteractionError as e:
             raise ClickException(e) from e
 
-def _get_storage(context):
-    try:
-        config = read_storage_config(context)
-    except ConfigError as e:
-        raise ClickException(e) from e
+def _get_storage(config, context):
     if context.storage == 'fcc':
         return FccStorage(config, context)
     if context.storage == 'cx':

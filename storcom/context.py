@@ -10,11 +10,10 @@ from storcom import config
 
 _CONTEXT_FILE = '.context'
 
-# TODO: consider reading config earlier
 try:
     contexts = config.read_contexts()
 except config.ConfigError as e:
-    click.ClickException(e.message).show()
+    click.echo(e.message, err=True)
     sys.exit(click.ClickException.exit_code)
 
 def complete_context_name(_, __, incomplete):
