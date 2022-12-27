@@ -3,7 +3,7 @@ from click import ClickException
 from tabulate import tabulate
 
 from storcom.base_storage import StorageInteractionError
-from storcom.config import StorageInitError
+from storcom.config import ConfigError
 from storcom.cx_storage import CxStorage
 from storcom.fcc_storage import FccStorage
 
@@ -55,10 +55,11 @@ def rm(storage, file_ids):
 
 def _get_storage(context):
     try:
+        # TODO: read config here, pass it to storage
         if context.storage == 'fcc':
             return FccStorage(context)
         if context.storage == 'cx':
             return CxStorage(context)
         raise ClickException(f'No storage for context: {context}')
-    except StorageInitError as e:
+    except ConfigError as e:
         raise ClickException(e) from e
