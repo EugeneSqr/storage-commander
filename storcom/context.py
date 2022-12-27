@@ -40,10 +40,12 @@ def use(storcom_ctx, shortcut, **kwargs):
     print(storcom_ctx.save())
 
 @context.command()
+@click.argument('shortcut', required=False, shell_complete=complete_shortcut)
 @click.pass_obj
-def show(storcom_ctx):
-    '''Show current context.'''
-    print(storcom_ctx)
+def show(storcom_ctx, shortcut):
+    '''Show current context, or the one defined by SHORTCUT.'''
+    context_to_show = Context.from_shortcut(shortcut) if shortcut else storcom_ctx
+    print(context_to_show)
 
 class Context():
     def __init__(self, **kwargs):
@@ -57,7 +59,7 @@ class Context():
 
     def update(self, shortcut, **kwargs):
         kwargs = {
-            **Context._parse_shortcut(shortcut),
+            **Context.from_shortcut(shortcut),
             **Context._remove_empty(kwargs),
         }
         self.__dict__.update(kwargs)
@@ -77,7 +79,7 @@ class Context():
             return Context(**dict(line.rstrip().split('=') for line in f))
 
     @classmethod
-    def _parse_shortcut(cls, shortcut):
+    def from_shortcut(cls, shortcut):
         kwargs = OrderedDict({
             'environment': None,
             'storage': None,
