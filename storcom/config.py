@@ -3,6 +3,11 @@ from pathlib import Path
 
 import tomli
 
+def get_or_create_config_directory():
+    config_directory = Path(env.get('STORCOM_HOME') or _get_standard_config_directory())
+    config_directory.mkdir(parents=True, exist_ok=True)
+    return config_directory
+
 def read_storage_config(context):
     config = _read_decode_config()
     if context.environment not in config:
@@ -25,7 +30,7 @@ def read_shortcuts():
     return _read_decode_config().get('shortcuts', {})
 
 def _read_decode_config():
-    config_file_path = _get_or_create_config_directory() / 'config.toml'
+    config_file_path = get_or_create_config_directory() / 'config.toml'
     try:
         with open(config_file_path, 'rb') as f:
             return tomli.load(f)
@@ -33,11 +38,6 @@ def _read_decode_config():
         raise ConfigError(f'Unable to read {config_file_path}: {e}') from e
     except tomli.TOMLDecodeError as e:
         raise ConfigError(f'Unable to decode {config_file_path}: {e}') from e
-
-def _get_or_create_config_directory():
-    config_directory = Path(env.get('STORCOM_HOME') or _get_standard_config_directory())
-    config_directory.mkdir(parents=True, exist_ok=True)
-    return config_directory
 
 def _get_standard_config_directory():
     config_directory = Path(env.get('XDG_CONFIG_HOME') or Path(env.get('HOME')) / '.config')

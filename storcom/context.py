@@ -1,14 +1,11 @@
 import json
 import os
 import sys
-from pathlib import Path
 from collections import OrderedDict
 
 import click
 
 from storcom import config
-
-_CONTEXT_FILE = '.context'
 
 try:
     # a better way would be passing all data to autocompletion handler as a context,
@@ -69,16 +66,17 @@ class Context():
         return self
 
     def save(self):
-        with open(_CONTEXT_FILE, 'w+', encoding='utf-8') as f:
+        with open(Context._get_context_file_path(), 'w+', encoding='utf-8') as f:
             for key, value in self.__dict__.items():
                 f.write(f'{key}={value}{os.linesep}')
         return self
 
     @classmethod
     def load(cls):
-        if not Path(_CONTEXT_FILE).is_file():
+        context_file_path = Context._get_context_file_path()
+        if not context_file_path.is_file():
             return Context()
-        with open(_CONTEXT_FILE, encoding='utf-8') as f:
+        with open(context_file_path, encoding='utf-8') as f:
             return Context(**dict(line.rstrip().split('=') for line in f))
 
     @classmethod
@@ -99,6 +97,10 @@ class Context():
     @classmethod
     def _remove_empty(cls, kwargs):
         return {k:v for k,v in kwargs.items() if v is not None}
+
+    @staticmethod
+    def _get_context_file_path():
+        return config.get_or_create_config_directory() / '.context'
 
     def __repr__(self):
         return json.dumps(self.__dict__)
