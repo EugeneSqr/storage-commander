@@ -10,13 +10,13 @@ from storcom.config import read_storage_config
 
 @click.group()
 @click.pass_context
-def file(ctx):
+def file(click_context):
     '''Work with files.'''
     try:
-        config = read_storage_config(ctx.obj)
+        config = read_storage_config(click_context.obj)
     except ConfigError as e:
         raise ClickException(e) from e
-    ctx.obj = _get_storage(config, ctx.obj)
+    click_context.obj = _get_storage(config, click_context.obj)
 
 @file.command()
 @click.pass_obj
