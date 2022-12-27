@@ -1,11 +1,12 @@
 from requests.exceptions import RequestException
 
+from storcom import config
 from storcom.base_storage import BaseStorage, StorageInteractionError
 from storcom.cx_auth import CxAuth
 
 class CxStorage(BaseStorage):
     def __init__(self, context):
-        self._storage_url, self._token = BaseStorage._read_config(context)
+        self._storage_url, self._token = config.read_storage_config(context)
         self._container_sid = context.user
 
     def file_details(self, file_id):

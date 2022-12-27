@@ -9,12 +9,9 @@ from storcom import config
 
 _CONTEXT_FILE = '.context'
 
-# TODO: find safer way to read configs
-# TODO: postpone contexts initialization
-contexts = config.read()['contexts']
-
 def complete_context_name(_, __, ___):
-    return list(contexts.keys())
+    # TODO: account for input text to filter out unmatched contexts
+    return list(config.read_contexts().keys())
 
 @click.group()
 def context():
@@ -81,7 +78,7 @@ class Context():
             'service': None,
             'user': None,
         })
-        values = (contexts.get(name) or '').split(':')
+        values = (config.read_contexts().get(name) or '').split(':')
         if len(values) > 1:
             keys = list(kwargs.keys())
             for index, value in enumerate(values):
