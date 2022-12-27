@@ -11,13 +11,13 @@ from storcom import config
 _CONTEXT_FILE = '.context'
 
 try:
-    contexts = config.read_contexts()
+    shortcuts = config.read_shortcuts()
 except config.ConfigError as e:
     click.echo(e.message, err=True)
     sys.exit(click.ClickException.exit_code)
 
-def complete_context_name(_, __, incomplete):
-    return [name for name in contexts.keys() if name.startswith(incomplete)]
+def complete_shortcut(_, __, incomplete):
+    return [shortcut for shortcut in shortcuts.keys() if shortcut.startswith(incomplete)]
 
 @click.group()
 def context():
@@ -32,11 +32,11 @@ def context():
               help='Storage type name.')
 @click.option('--service', help='Name of the service to which files belong.')
 @click.option('--user', help='Name of the user which owns the files.')
-@click.argument('name', required=False, shell_complete=complete_context_name)
+@click.argument('shortcut', required=False, shell_complete=complete_shortcut)
 @click.pass_obj
-def use(storcom_ctx, name, **kwargs):
-    '''Set context for subsequent operations by NAME or by explicitly setting each parameter.'''
-    storcom_ctx.update(name, **kwargs)
+def use(storcom_ctx, shortcut, **kwargs):
+    '''Set context for subsequent operations by SHORTCUT or by explicitly setting each parameter.'''
+    storcom_ctx.update(shortcut, **kwargs)
     print(storcom_ctx.save())
 
 @context.command()
@@ -55,9 +55,9 @@ class Context():
             **kwargs,
         })
 
-    def update(self, name, **kwargs):
+    def update(self, shortcut, **kwargs):
         kwargs = {
-            **Context._parse_named_context(name),
+            **Context._parse_shortcut(shortcut),
             **Context._remove_empty(kwargs),
         }
         self.__dict__.update(kwargs)
@@ -77,14 +77,14 @@ class Context():
             return Context(**dict(line.rstrip().split('=') for line in f))
 
     @classmethod
-    def _parse_named_context(cls, name):
+    def _parse_shortcut(cls, shortcut):
         kwargs = OrderedDict({
             'environment': None,
             'storage': None,
             'service': None,
             'user': None,
         })
-        values = (contexts.get(name) or '').split(':')
+        values = (shortcuts.get(shortcut) or '').split(':')
         if len(values) > 1:
             keys = list(kwargs.keys())
             for index, value in enumerate(values):

@@ -18,8 +18,8 @@ def read_storage_config(context):
         raise ConfigError(f'Storage token missing for service: {context.service}')
     return storage_url, service_token
 
-def read_contexts():
-    return _read_decode_config().get('contexts', {})
+def read_shortcuts():
+    return _read_decode_config().get('shortcuts', {})
 
 def _read_decode_config():
     config_file_path = 'config.toml'
