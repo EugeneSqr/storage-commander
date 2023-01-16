@@ -1,7 +1,11 @@
+from multiprocessing.pool import ThreadPool
+
 from requests.exceptions import RequestException
 
 from storcom.base_storage import BaseStorage, StorageInteractionError
 from storcom.cx_auth import CxAuth
+
+_THREAD_POOL_SIZE = 5
 
 class FccStorage(BaseStorage):
     def __init__(self, config, context):
@@ -15,11 +19,7 @@ class FccStorage(BaseStorage):
             raise StorageInteractionError(f"Can't get fcc file details for {file_id}") from e
 
     def delete_files(self, file_ids):
-        for file_id in file_ids:
-            try:
-                self._make_request('DELETE', f'{self._storage_url}/files/{file_id}')
-            except RequestException as e:
-                raise StorageInteractionError(f"Can't delete fcc file {file_id}") from e
+        ThreadPool(processes=_THREAD_POOL_SIZE).map(self._delete_file, file_ids)
 
     @property
     def _tabular_headers(self):
@@ -43,6 +43,12 @@ class FccStorage(BaseStorage):
                                       })
         except RequestException as e:
             raise StorageInteractionError("Can't get list of files.") from e
+
+    def _delete_file(self, file_id):
+        try:
+            self._make_request('DELETE', f'{self._storage_url}/files/{file_id}')
+        except RequestException as e:
+            raise StorageInteractionError(f"Can't delete fcc file {file_id}") from e
 
     def _make_request(self, method, url, **kwargs):
         return BaseStorage._make_request(method, url, auth=CxAuth(self._token), **kwargs)
