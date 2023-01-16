@@ -14,11 +14,12 @@ class CxStorage(BaseStorage):
         except RequestException as e:
             raise StorageInteractionError(f"Can't get cx file details for {file_id}") from e
 
-    def delete_file(self, file_id):
-        try:
-            return self._make_request('DELETE', f'{self._get_files_base_url()}/{file_id}')
-        except RequestException as e:
-            raise StorageInteractionError(f"Can't delete cx file {file_id}") from e
+    def delete_files(self, file_ids):
+        for file_id in file_ids:
+            try:
+                self._make_request('DELETE', f'{self._get_files_base_url()}/{file_id}')
+            except RequestException as e:
+                raise StorageInteractionError(f"Can't delete cx file {file_id}") from e
 
     @property
     def _tabular_headers(self):

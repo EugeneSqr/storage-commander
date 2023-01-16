@@ -12,7 +12,7 @@ class BaseStorage():
         pass
 
     @abstractmethod
-    def delete_file(self, file_id):
+    def delete_files(self, file_ids):
         pass
 
     def list_files(self):

@@ -52,11 +52,10 @@ def show(storage, file_id):
 @click.pass_obj
 def rm(storage, file_ids):
     '''Delete files by their FILE_IDS.'''
-    for file_id in file_ids:
-        try:
-            storage.delete_file(file_id)
-        except StorageInteractionError as e:
-            raise ClickException(e) from e
+    try:
+        storage.delete_files(file_ids)
+    except StorageInteractionError as e:
+        raise ClickException(e) from e
 
 def _get_storage(config, context):
     if context.storage == 'fcc':
