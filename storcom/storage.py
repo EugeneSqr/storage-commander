@@ -3,8 +3,8 @@ from multiprocessing.pool import ThreadPool
 
 import requests
 from requests.exceptions import RequestException
+from requests.auth import AuthBase
 
-from storcom.cx_auth import CxAuth
 
 _THREAD_POOL_SIZE = 5
 _TIMEOUT = 10
@@ -128,6 +128,15 @@ class CxStorage(BaseStorage):
 
 class StorageInteractionError(Exception):
     pass
+
+
+class CxAuth(AuthBase):
+    def __init__(self, token):
+        self._token = token
+
+    def __call__(self, request):
+        request.headers['Authorization'] = f'Bearer {self._token}'
+        return request
 
 
 def _make_request(method, url, **kwargs):
