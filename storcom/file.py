@@ -2,11 +2,8 @@ import click
 from click import ClickException
 from tabulate import tabulate
 
-from storcom.base_storage import StorageInteractionError
-from storcom.config import ConfigError
-from storcom.cx_storage import CxStorage
-from storcom.fcc_storage import FccStorage
-from storcom.config import read_storage_config
+from storcom.storage import FccStorage, CxStorage, StorageInteractionError
+from storcom.config import read_storage_config, ConfigError
 
 @click.group()
 @click.pass_context
