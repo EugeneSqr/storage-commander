@@ -24,12 +24,19 @@ class BaseStorage():
     def list_files(self):
         return self._request_files_list().text
 
-    def list_files_tabular(self):
-        return _list_files_tabular(self._request_files_list(), self._tabular_fields)
+    def list_files_tabular(self, extra_fields=None):
+        return _list_files_tabular(
+            self._request_files_list(),
+            [*self._tabular_fields_begin, *(extra_fields or []), *self._tabular_fields_end])
 
     @property
     @abstractmethod
-    def _tabular_fields(self):
+    def _tabular_fields_begin(self):
+        pass
+
+    @property
+    @abstractmethod
+    def _tabular_fields_end(self):
         pass
 
     @abstractmethod
@@ -52,8 +59,12 @@ class FccStorage(BaseStorage):
         ThreadPool(processes=_THREAD_POOL_SIZE).map(self._delete_file, file_ids)
 
     @property
-    def _tabular_fields(self):
+    def _tabular_fields_begin(self):
         return ['id', 'name', 'batch', 'date_changed']
+
+    @property
+    def _tabular_fields_end(self):
+        return ['date_changed']
 
     def _request_files_list(self):
         try:
@@ -94,14 +105,12 @@ class CxStorage(BaseStorage):
         ThreadPool(processes=_THREAD_POOL_SIZE).map(self._delete_file, file_ids)
 
     @property
-    def _tabular_fields(self):
-        return [
-            'file_sid',
-            'name',
-            'type',
-            'mime_type',
-            'date_modified',
-        ]
+    def _tabular_fields_begin(self):
+        return ['file_sid', 'name', 'type', 'mime_type']
+
+    @property
+    def _tabular_fields_end(self):
+        return ['date_modified']
 
     def _request_files_list(self):
         try:

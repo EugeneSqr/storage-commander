@@ -16,12 +16,14 @@ def file(click_context):
     click_context.obj = _get_storage(config, click_context.obj)
 
 @file.command()
+@click.option('--field', '-f', multiple=True, help='Extra tabular field.')
 @click.pass_obj
-def ll(storage):
+def ll(storage, **kwargs):
     '''List files in a human-readable format.'''
     try:
-        rows, headers = storage.list_files_tabular()
-        print(tabulate(rows, headers=headers, tablefmt='presto'))
+        tabulated_list = tabulate(*storage.list_files_tabular(extra_fields=kwargs.pop('field')),
+                                  tablefmt='presto')
+        print(tabulated_list)
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
