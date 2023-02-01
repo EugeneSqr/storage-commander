@@ -1,6 +1,8 @@
+import sys
 from abc import ABCMeta, abstractmethod
 from multiprocessing.pool import ThreadPool
 
+import curlify
 import requests
 from requests.exceptions import RequestException
 from requests.auth import AuthBase
@@ -12,6 +14,10 @@ _TIMEOUT = 10
 
 class BaseStorage():
     __metaclass__ = ABCMeta
+
+    def __init__(self, config, show_curl=False):
+        self._storage_url, self._token = config
+        self._show_curl = show_curl
 
     @abstractmethod
     def file_details(self, file_id):
@@ -43,10 +49,18 @@ class BaseStorage():
     def _request_files_list(self):
         pass
 
+    def _make_request(self, method, url, **kwargs):
+        response = requests.request(
+            method, url, auth=CxAuth(self._token), timeout=_TIMEOUT, **kwargs)
+        if self._show_curl:
+            print(curlify.to_curl(response.request), file=sys.stderr)
+        response.raise_for_status()
+        return response
+
 
 class FccStorage(BaseStorage):
-    def __init__(self, config, context):
-        self._storage_url, self._token = config
+    def __init__(self, config, context, show_curl=False):
+        super().__init__(config, show_curl)
         self._owner = context.user
 
     def file_details(self, file_id):
@@ -83,16 +97,13 @@ class FccStorage(BaseStorage):
         except RequestException as e:
             raise StorageInteractionError(f"Can't delete fcc file {file_id}") from e
 
-    def _make_request(self, method, url, **kwargs):
-        return _make_request(method, url, auth=CxAuth(self._token), **kwargs)
-
     def _owner_param(self):
         return {'owner': self._owner} if self._owner else {}
 
 
 class CxStorage(BaseStorage):
-    def __init__(self, config, context):
-        self._storage_url, self._token = config
+    def __init__(self, config, context, show_curl=False):
+        super().__init__(config, show_curl)
         self._container_sid = context.user
 
     def file_details(self, file_id):
@@ -128,9 +139,6 @@ class CxStorage(BaseStorage):
         except RequestException as e:
             raise StorageInteractionError(f"Can't delete cx file {file_id}") from e
 
-    def _make_request(self, method, url, **kwargs):
-        return _make_request(method, url, auth=CxAuth(self._token), **kwargs)
-
     def _get_files_base_url(self):
         return f'{self._storage_url}/core/v2/storage/files'
 
@@ -147,11 +155,6 @@ class CxAuth(AuthBase):
         request.headers['Authorization'] = f'Bearer {self._token}'
         return request
 
-
-def _make_request(method, url, **kwargs):
-    response = requests.request(method, url, timeout=_TIMEOUT, **kwargs)
-    response.raise_for_status()
-    return response
 
 def _list_files_tabular(files_list_response, fields):
     try:

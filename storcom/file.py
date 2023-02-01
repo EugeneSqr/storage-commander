@@ -6,14 +6,16 @@ from storcom.storage import FccStorage, CxStorage, StorageInteractionError
 from storcom.config import read_storage_config, ConfigError
 
 @click.group()
+@click.option(
+    '--show_curl', '-c', is_flag=True, show_default=True, default=False, help='Show curl.')
 @click.pass_context
-def file(click_context):
+def file(click_context, show_curl):
     '''Work with files.'''
     try:
         config = read_storage_config(click_context.obj)
     except ConfigError as e:
         raise ClickException(e) from e
-    click_context.obj = _get_storage(config, click_context.obj)
+    click_context.obj = _get_storage(config, click_context.obj, show_curl)
 
 @file.command()
 @click.option('--field', '-f', multiple=True, help='Extra tabular field.')
@@ -56,9 +58,9 @@ def rm(storage, file_ids):
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
-def _get_storage(config, context):
+def _get_storage(config, context, show_curl):
     if context.storage == 'fcc':
-        return FccStorage(config, context)
+        return FccStorage(config, context, show_curl)
     if context.storage == 'cx':
-        return CxStorage(config, context)
+        return CxStorage(config, context, show_curl)
     raise ClickException(f'No storage for context: {context}')
