@@ -5,7 +5,7 @@ setup(
     version='0.0.1',
     packages=find_packages(),
     install_requires=[
-        'Click', 'requests', 'tomli', 'tabulate', 'curlify',
+        'Click', 'dataclasses', 'requests', 'tomli', 'tabulate', 'curlify',
     ],
     entry_points={
         'console_scripts': [

@@ -5,11 +5,11 @@ from tabulate import tabulate
 from storcom.storage import FccStorage, CxStorage, StorageInteractionError
 from storcom.config import read_storage_config, ConfigError
 
-@click.group()
+@click.group('file')
 @click.option(
     '--show_curl', '-c', is_flag=True, show_default=True, default=False, help='Show curl.')
 @click.pass_context
-def file(click_context, show_curl):
+def file_group(click_context, show_curl):
     '''Work with files.'''
     try:
         config = read_storage_config(click_context.obj)
@@ -17,7 +17,7 @@ def file(click_context, show_curl):
         raise ClickException(e) from e
     click_context.obj = _get_storage(config, click_context.obj, show_curl)
 
-@file.command()
+@file_group.command()
 @click.option('--field', '-f', multiple=True, help='Extra tabular field.')
 @click.pass_obj
 def ll(storage, **kwargs):
@@ -29,7 +29,7 @@ def ll(storage, **kwargs):
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
-@file.command()
+@file_group.command()
 @click.pass_obj
 def ls(storage):
     '''List files as raw JSON.'''
@@ -38,7 +38,7 @@ def ls(storage):
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
-@file.command()
+@file_group.command()
 @click.argument('file_id')
 @click.pass_obj
 def show(storage, file_id):
@@ -48,7 +48,7 @@ def show(storage, file_id):
     except StorageInteractionError as e:
         raise ClickException(e) from e
 
-@file.command()
+@file_group.command()
 @click.argument('file_ids', nargs=-1)
 @click.pass_obj
 def rm(storage, file_ids):

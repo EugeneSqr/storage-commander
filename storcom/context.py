@@ -1,11 +1,23 @@
-import json
 import os
 import sys
-from collections import OrderedDict
+from typing import Optional
+from dataclasses import dataclass
+from pathlib import Path
 
 import click
 
 from storcom import config
+
+
+@dataclass
+class Context:
+    environment: str = ''
+    storage: str = ''
+    service: str = ''
+    user: str = ''
+
+    def __str__(self):
+        return str(self.__dict__)
 
 try:
     # a better way would be passing all data to autocompletion handler as a context,
@@ -19,11 +31,11 @@ except config.ConfigError as e:
 def complete_shortcut(_, __, incomplete):
     return [shortcut for shortcut in shortcuts.keys() if shortcut.startswith(incomplete)]
 
-@click.group()
-def context():
+@click.group('context')
+def context_group():
     '''Which environment, storage, service or owner to use.'''
 
-@context.command()
+@context_group.command()
 @click.option('--environment',
               type=click.Choice(['qa', 'prod'], case_sensitive=False),
               help='Environment where a storage is deployed.')
@@ -36,71 +48,37 @@ def context():
 @click.pass_obj
 def use(storcom_ctx, shortcut, **kwargs):
     '''Set context for subsequent operations by SHORTCUT or by explicitly setting each parameter.'''
-    storcom_ctx.update(shortcut, **kwargs)
-    print(storcom_ctx.save())
+    print(_update(storcom_ctx, shortcut, **kwargs))
 
-@context.command()
+@context_group.command()
 @click.argument('shortcut', required=False, shell_complete=complete_shortcut)
 @click.pass_obj
 def show(storcom_ctx, shortcut):
     '''Show current context, or the one defined by SHORTCUT.'''
-    context_to_show = Context.from_shortcut(shortcut) if shortcut else storcom_ctx
+    context_to_show = load_with_shortcut(shortcut) or storcom_ctx
     print(context_to_show)
 
-class Context():
-    def __init__(self, **kwargs):
-        self.__dict__.update({
-            'environment': '',
-            'storage': '',
-            'service': '',
-            'user': '',
-            **kwargs,
-        })
+def load() -> Context:
+    context_file_path = _get_context_file_path()
+    if not context_file_path.is_file():
+        return Context()
+    with open(context_file_path, encoding='utf-8') as f:
+        return Context(**dict(line.rstrip().split('=') for line in f))
 
-    def update(self, shortcut, **kwargs):
-        kwargs = {
-            **Context.from_shortcut(shortcut),
-            **Context._remove_empty(kwargs),
-        }
-        self.__dict__.update(kwargs)
-        return self
+def load_with_shortcut(shortcut: str) -> Optional[Context]:
+    shortcut_value = shortcuts.get(shortcut)
+    return Context(*shortcut_value.split(':')) if shortcut_value else None
 
-    def save(self):
-        with open(Context._get_context_file_path(), 'w+', encoding='utf-8') as f:
-            for key, value in self.__dict__.items():
-                f.write(f'{key}={value}{os.linesep}')
-        return self
+def _update(context: Context, shortcut: str, **kwargs) -> Context:
+    shortcut_context = load_with_shortcut(shortcut)
+    context.__dict__.update({
+        **(shortcut_context.__dict__ if shortcut_context else {}),
+        **{k:v for k,v in kwargs.items() if v is not None},
+    })
+    with open(_get_context_file_path(), 'w+', encoding='utf-8') as f:
+        for key, value in context.__dict__.items():
+            f.write(f'{key}={value}{os.linesep}')
+    return context
 
-    @classmethod
-    def load(cls):
-        context_file_path = Context._get_context_file_path()
-        if not context_file_path.is_file():
-            return Context()
-        with open(context_file_path, encoding='utf-8') as f:
-            return Context(**dict(line.rstrip().split('=') for line in f))
-
-    @classmethod
-    def from_shortcut(cls, shortcut):
-        kwargs = OrderedDict({
-            'environment': None,
-            'storage': None,
-            'service': None,
-            'user': None,
-        })
-        values = (shortcuts.get(shortcut) or '').split(':')
-        if len(values) > 1:
-            keys = list(kwargs.keys())
-            for index, value in enumerate(values):
-                kwargs[keys[index]] = value
-        return Context._remove_empty(kwargs)
-
-    @classmethod
-    def _remove_empty(cls, kwargs):
-        return {k:v for k,v in kwargs.items() if v is not None}
-
-    @staticmethod
-    def _get_context_file_path():
-        return config.get_or_create_config_directory() / '.context'
-
-    def __repr__(self):
-        return json.dumps(self.__dict__)
+def _get_context_file_path() -> Path:
+    return config.get_or_create_config_directory() / '.context'

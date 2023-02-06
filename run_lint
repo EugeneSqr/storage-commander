@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
+. env/bin/activate
+mypy --install-types --non-interactive -p storcom
+find storcom -type f -name '*.py' | xargs pylint
