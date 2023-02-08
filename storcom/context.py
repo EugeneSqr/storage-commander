@@ -1,8 +1,8 @@
 import os
 import sys
-from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -37,7 +37,7 @@ def context_group():
 
 @context_group.command()
 @click.option('--environment',
-              type=click.Choice(['qa', 'prod'], case_sensitive=False),
+              type=click.Choice(['dev', 'qa', 'prod'], case_sensitive=False),
               help='Environment where a storage is deployed.')
 @click.option('--storage',
               type=click.Choice(['fcc', 'cx'], case_sensitive=False),
@@ -65,20 +65,26 @@ def load() -> Context:
     with open(context_file_path, encoding='utf-8') as f:
         return Context(**dict(line.rstrip().split('=') for line in f))
 
-def load_with_shortcut(shortcut: str) -> Optional[Context]:
+def load_with_shortcut(shortcut: str) -> Context:
     shortcut_value = shortcuts.get(shortcut)
-    return Context(*shortcut_value.split(':')) if shortcut_value else None
+    return Context(*shortcut_value.split(':')) if shortcut_value else Context()
 
 def _update(context: Context, shortcut: str, **kwargs) -> Context:
     shortcut_context = load_with_shortcut(shortcut)
     context.__dict__.update({
-        **(shortcut_context.__dict__ if shortcut_context else {}),
+        **({} if _is_empty(shortcut_context) else shortcut_context.__dict__),
         **{k:v for k,v in kwargs.items() if v is not None},
     })
     with open(_get_context_file_path(), 'w+', encoding='utf-8') as f:
         for key, value in context.__dict__.items():
             f.write(f'{key}={value}{os.linesep}')
     return context
+
+def _is_empty(context: Context) -> bool:
+    return all(value == _default(value) for value in context.__dict__.values())
+
+def _default(value: Any) -> bool:
+    return type(value)()
 
 def _get_context_file_path() -> Path:
     return config.get_or_create_config_directory() / '.context'
