@@ -1,9 +1,10 @@
 from os import environ as env
 from pathlib import Path
+from typing import Dict
 
 import tomli
 
-def get_or_create_config_directory():
+def get_or_create_config_directory() -> Path:
     config_directory = Path(env.get('STORCOM_HOME') or _get_standard_config_directory())
     config_directory.mkdir(parents=True, exist_ok=True)
     return config_directory
@@ -26,7 +27,7 @@ def read_storage_config(context):
         raise ConfigError(f'Storage token missing for service: {context.service}')
     return storage_url, service_token
 
-def read_shortcuts():
+def read_shortcuts() -> Dict[str, str]:
     return _read_decode_config().get('shortcuts', {})
 
 def _read_decode_config():
