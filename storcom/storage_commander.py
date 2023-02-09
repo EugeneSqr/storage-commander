@@ -8,7 +8,7 @@ def storcom(click_context):
     '''
     A unified way of working with all your storages.
     '''
-    click_context.obj = context.load()
+    click_context.obj = context.load() or context.Context()
 
 storcom.add_command(context.context_group)
 storcom.add_command(file.file_group)

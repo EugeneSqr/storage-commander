@@ -4,19 +4,25 @@ from tabulate import tabulate
 
 from storcom.storage import FccStorage, CxStorage, StorageInteractionError
 from storcom.config import read_storage_config, ConfigError
+from storcom.context import parse
 
 @click.group('file')
 @click.option(
-    '--show_curl', '-c', is_flag=True, show_default=True, default=False, help='Show curl.')
+    '--context_string', '-c', help='Temporarily set context using CONTEXT_STRING for the command.')
+@click.option(
+    '--show_curl', '-u', is_flag=True, show_default=True, default=False, help='Show curl.')
 @click.pass_context
-def file_group(click_context, show_curl):
+def file_group(click_context: click.Context, context_string: str, show_curl: bool) -> None:
     '''
     Work with files.
     '''
+    parsed_context = parse(context_string)
+    if parsed_context:
+        click_context.obj = parsed_context
     try:
         config = read_storage_config(click_context.obj)
     except ConfigError as e:
-        raise ClickException(e) from e
+        raise ClickException(str(e)) from e
     click_context.obj = _get_storage(config, click_context.obj, show_curl)
 
 @file_group.command()

@@ -40,7 +40,7 @@ def test_load_returns_empty_context_when_no_file(arrange: Mock) -> None:
     config_directory = _build_get_or_create_config_directory_mock(has_config_file=False)
     with arrange.config.get_or_create_config_directory(config_directory):
         actual = context.load()
-        _assert_empty_context(actual)
+        assert actual is None
 
 def test_load_returns_empty_context_from_empty_file(arrange: Mock) -> None:
     config_directory = _build_get_or_create_config_directory_mock(has_config_file=True)
@@ -48,7 +48,7 @@ def test_load_returns_empty_context_from_empty_file(arrange: Mock) -> None:
     with _many(arrange.config.get_or_create_config_directory(config_directory),
                arrange.context_file(context_file_data)):
         actual = context.load()
-        _assert_empty_context(actual)
+        assert actual is None
 
 def test_load_returns_context_from_file_lines_out_of_order(arrange: Mock) -> None:
     config_directory = _build_get_or_create_config_directory_mock(has_config_file=True)
@@ -70,7 +70,7 @@ def test_parse_empty_context_from_empty_shortcut_value(arrange: Mock, value: Opt
         shortcut: value,
     })
     actual = context.parse(shortcut)
-    _assert_empty_context(actual)
+    assert actual is None
 
 @pytest.mark.parametrize('value', ['env:stor:srv:', 'env:stor:srv'])
 def test_parse_context_without_user_no_user_in_shortcut_value(arrange: Mock, value: str) -> None:
@@ -137,15 +137,13 @@ def _many(*context_managers: ContextManager[None]) -> Generator[List[None], None
 def _build_get_or_create_config_directory_mock(has_config_file: bool=True) -> Mock:
     return Mock(__truediv__=Mock(return_value=Mock(is_file=Mock(return_value=has_config_file))))
 
-def _assert_context(actual: Context,
+def _assert_context(actual: Optional[Context],
                     environment: str,
                     storage: str,
                     service: str,
                     user: str) -> None:
+    assert actual is not None
     assert actual.environment == environment
     assert actual.storage == storage
     assert actual.service == service
     assert actual.user == user
-
-def _assert_empty_context(actual: Context) -> None:
-    _assert_context(actual, '', '', '', '')
