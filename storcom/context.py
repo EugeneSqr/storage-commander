@@ -19,7 +19,6 @@ class Context:
     def __str__(self) -> str:
         return str(self.__dict__)
 
-# TODO: export this method into other modules so they can use autocomplete as well
 try:
     # a better way would be passing all data to autocompletion handler as a context,
     # however there is a bug in click which always creates new context instead of grabbing

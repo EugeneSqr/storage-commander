@@ -2,13 +2,17 @@ import click
 from click import ClickException
 from tabulate import tabulate
 
+from storcom import context as storcom_context
 from storcom.storage import FccStorage, CxStorage, StorageInteractionError
 from storcom.config import read_storage_config, ConfigError
-from storcom.context import parse
+
 
 @click.group('file')
 @click.option(
-    '--context_string', '-c', help='Temporarily set context using CONTEXT_STRING for the command.')
+    '--context_string',
+    '-c',
+    shell_complete=storcom_context.complete_with_shortcut,
+    help='Temporarily set context using CONTEXT_STRING for the command.')
 @click.option(
     '--show_curl', '-u', is_flag=True, show_default=True, default=False, help='Show curl.')
 @click.pass_context
@@ -16,7 +20,7 @@ def file_group(click_context: click.Context, context_string: str, show_curl: boo
     '''
     Work with files.
     '''
-    parsed_context = parse(context_string)
+    parsed_context = storcom_context.parse(context_string)
     if parsed_context:
         click_context.obj = parsed_context
     try:
