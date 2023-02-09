@@ -28,12 +28,14 @@ except config.ConfigError as e:
     click.echo(e.message, err=True)
     sys.exit(click.ClickException.exit_code)
 
-def complete_shortcut(_: click.Context, __: str, incomplete: str) -> List[str]:
+def complete_with_shortcut(_: click.Context, __: str, incomplete: str) -> List[str]:
     return [shortcut for shortcut in shortcuts.keys() if shortcut.startswith(incomplete)]
 
 @click.group('context')
 def context_group() -> None:
-    '''Which environment, storage, service or owner to use.'''
+    '''
+    Which environment, storage, service or owner to use.
+    '''
 
 @context_group.command()
 @click.option('--environment',
@@ -44,19 +46,25 @@ def context_group() -> None:
               help='Storage type name.')
 @click.option('--service', help='Name of the service to which files belong.')
 @click.option('--user', help='Name of the user which owns the files.')
-@click.argument('shortcut', required=False, shell_complete=complete_shortcut)
+@click.argument('context_string', required=False, shell_complete=complete_with_shortcut)
 @click.pass_obj
-def use(storcom_ctx: Context, shortcut: str, **kwargs: Dict[str, str]) -> None:
-    '''Set context for subsequent operations by SHORTCUT or by explicitly setting each parameter.'''
-    print(_update(storcom_ctx, shortcut, **kwargs))
+def use(storcom_ctx: Context, context_string: str, **kwargs: Dict[str, str]) -> None:
+    '''
+    Set context with CONTEXT_STRING or by setting each part separately.
+    The CONTEXT_STRING can be either a shortcut or a serialized context.
+    '''
+    print(_update(storcom_ctx, context_string, **kwargs))
 
 @context_group.command()
-@click.argument('shortcut', required=False, shell_complete=complete_shortcut)
+@click.argument('context_string', required=False, shell_complete=complete_with_shortcut)
 @click.pass_obj
-def show(storcom_ctx: Context, shortcut: str) -> None:
-    '''Show current context, or the one defined by SHORTCUT.'''
-    context_to_show = load_with_shortcut(shortcut) or storcom_ctx
-    print(context_to_show)
+def show(storcom_ctx: Context, context_string: str) -> None:
+    '''
+    Show current context, or the one defined by CONTEXT_STRING.
+    The CONTEXT_STRING can be either a shortcut or a serialized context.
+    '''
+    parsed_context = parse(context_string)
+    print(parsed_context if not _is_empty(parsed_context) else storcom_ctx)
 
 def load() -> Context:
     context_file_path = _get_context_file_path()
@@ -65,14 +73,14 @@ def load() -> Context:
     with open(context_file_path, encoding='utf-8') as f:
         return Context(**dict(line.rstrip().split('=') for line in f))
 
-def load_with_shortcut(shortcut: str) -> Context:
-    shortcut_value = shortcuts.get(shortcut)
-    return Context(*shortcut_value.split(':')) if shortcut_value else Context()
+def parse(value: str) -> Context:
+    value_to_parse = shortcuts.get(value) if value in shortcuts else value
+    return Context(*value_to_parse.split(':')) if value_to_parse else Context()
 
-def _update(context: Context, shortcut: str, **kwargs: Dict[str, str]) -> Context:
-    shortcut_context = load_with_shortcut(shortcut)
+def _update(context: Context, context_string: str, **kwargs: Dict[str, str]) -> Context:
+    parsed_context = parse(context_string)
     context.__dict__.update({
-        **({} if _is_empty(shortcut_context) else shortcut_context.__dict__),
+        **({} if _is_empty(parsed_context) else parsed_context.__dict__),
         **{k:v for k,v in kwargs.items() if v is not None},
     })
     with open(_get_context_file_path(), 'w+', encoding='utf-8') as f:

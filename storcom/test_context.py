@@ -63,58 +63,71 @@ def test_load_returns_context_from_file_lines_out_of_order(arrange: Mock) -> Non
         actual = context.load()
         _assert_context(actual, 'env', 'stor', 'srv', 'usr')
 
-def test_load_with_shortcut_empty_context_from_missing_shortcut(arrange: Mock) -> None:
-    arrange.shortcuts({})
-    actual = context.load_with_shortcut('missing shortcut')
-    _assert_empty_context(actual)
-
 @pytest.mark.parametrize('value', [':', '', None])
-def test_load_with_shortcut_empty_context_from_empty_shortcut_value(arrange: Mock,
-                                                                    value: Optional[str]) -> None:
+def test_parse_empty_context_from_empty_shortcut_value(arrange: Mock, value: Optional[str]) -> None:
     shortcut = 'test_shortcut'
     arrange.shortcuts({
         shortcut: value,
     })
-    actual = context.load_with_shortcut(shortcut)
+    actual = context.parse(shortcut)
     _assert_empty_context(actual)
 
 @pytest.mark.parametrize('value', ['env:stor:srv:', 'env:stor:srv'])
-def test_load_with_shortcut_context_without_user_no_user_in_shortcut_value(arrange: Mock,
-                                                                           value: str) -> None:
+def test_parse_context_without_user_no_user_in_shortcut_value(arrange: Mock, value: str) -> None:
     shortcut = 'test_shortcut'
     arrange.shortcuts({
         shortcut: value,
     })
-    actual = context.load_with_shortcut(shortcut)
+    actual = context.parse(shortcut)
     _assert_context(actual, 'env', 'stor', 'srv', '')
 
 @pytest.mark.parametrize('value', ['env:stor:', 'env:stor'])
-def test_load_with_shortcut_context_without_service_user_no_service_user_in_shortcut_value(
+def test_parse_context_without_service_user_no_service_user_in_shortcut_value(
         arrange:Mock, value: str) -> None:
     shortcut = 'test_shortcut'
     arrange.shortcuts({
         shortcut: value,
     })
-    actual = context.load_with_shortcut(shortcut)
+    actual = context.parse(shortcut)
     _assert_context(actual, 'env', 'stor', '', '')
 
 @pytest.mark.parametrize('value', ['env:', 'env'])
-def test_load_with_shortcut_context_env_only_env_in_shortcut_value(arrange: Mock,
-                                                                   value: str) -> None:
+def test_parse_context_env_only_env_in_shortcut_value(arrange: Mock, value: str) -> None:
     shortcut = 'test_shortcut'
     arrange.shortcuts({
         shortcut: value,
     })
-    actual = context.load_with_shortcut(shortcut)
+    actual = context.parse(shortcut)
     _assert_context(actual, 'env', '', '', '')
 
-def test_load_with_shortcut_complete_context_complete_shortcut_value(arrange: Mock) -> None:
+def test_parse_complete_context_complete_shortcut_value(arrange: Mock) -> None:
     shortcut = 'test_shortcut'
     arrange.shortcuts({
         shortcut: 'env:stor:srv:usr',
     })
-    actual = context.load_with_shortcut(shortcut)
+    actual = context.parse(shortcut)
     _assert_context(actual, 'env', 'stor', 'srv', 'usr')
+
+def test_parse_complete_context_from_value(arrange: Mock) -> None:
+    arrange.shortcuts({})
+    actual = context.parse('env:stor:srv:usr')
+    _assert_context(actual, 'env', 'stor', 'srv', 'usr')
+
+def test_parse_shortcut_overrides_stringified_value(arrange: Mock) -> None:
+    shortcut = 'env:stor:srv:usr'
+    arrange.shortcuts({
+        shortcut: 'env2:stor2:srv2:usr2',
+    })
+    actual = context.parse(shortcut)
+    # shortcut itself is a valid stringified context value
+    # still the lookup should be performed first, rather then parsing the value of it
+    _assert_context(actual, 'env2', 'stor2', 'srv2', 'usr2')
+
+def test_parse_context_with_env_from_missing_shortcut(arrange: Mock) -> None:
+    arrange.shortcuts({})
+    actual = context.parse('missing shortcut')
+    # missing shortcut is treated as stringified context and gets parsed
+    _assert_context(actual, 'missing shortcut', '', '', '')
 
 @contextmanager
 def _many(*context_managers: ContextManager[None]) -> Generator[List[None], None, None]:

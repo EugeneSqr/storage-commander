@@ -5,7 +5,9 @@ from storcom import context, file
 @click.group()
 @click.pass_context
 def storcom(click_context):
-    '''A unified way of working with all your storages.'''
+    '''
+    A unified way of working with all your storages.
+    '''
     click_context.obj = context.load()
 
 storcom.add_command(context.context_group)
