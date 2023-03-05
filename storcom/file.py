@@ -1,11 +1,12 @@
+from typing import List
+
 import click
 from click import ClickException
 from tabulate import tabulate
 
 from storcom import context as storcom_context
-from storcom.storage import FccStorage, CxStorage, StorageInteractionError
-from storcom.config import read_storage_config, ConfigError
-
+from storcom.storage import BaseStorage, FccStorage, CxStorage, StorageInteractionError
+from storcom.config import read_storage_config, ConfigError, StorageConfig
 
 @click.group('file')
 @click.option(
@@ -32,7 +33,7 @@ def file_group(click_context: click.Context, context_string: str, show_curl: boo
 @file_group.command()
 @click.option('--field', '-f', multiple=True, help='Extra tabular field.')
 @click.pass_obj
-def ll(storage, **kwargs):
+def ll(storage: BaseStorage, **kwargs: List[str]) -> None:
     '''
     List files in a human-readable format.
     '''
@@ -41,44 +42,46 @@ def ll(storage, **kwargs):
                                   tablefmt='presto')
         print(tabulated_list)
     except StorageInteractionError as e:
-        raise ClickException(e) from e
+        raise ClickException(str(e)) from e
 
 @file_group.command()
 @click.pass_obj
-def ls(storage):
+def ls(storage: BaseStorage) -> None:
     '''
     List files as raw JSON.
     '''
     try:
         print(storage.list_files())
     except StorageInteractionError as e:
-        raise ClickException(e) from e
+        raise ClickException(str(e)) from e
 
 @file_group.command()
 @click.argument('file_id')
 @click.pass_obj
-def show(storage, file_id):
+def show(storage: BaseStorage, file_id: str) -> None:
     '''
     Show file details by FILE_ID provided as an argument.
     '''
     try:
         print(storage.file_details(file_id))
     except StorageInteractionError as e:
-        raise ClickException(e) from e
+        raise ClickException(str(e)) from e
 
 @file_group.command()
 @click.argument('file_ids', nargs=-1)
 @click.pass_obj
-def rm(storage, file_ids):
+def rm(storage: BaseStorage, file_ids: List[str]) -> None:
     '''
     Delete files by their FILE_IDS.
     '''
     try:
         storage.delete_files(file_ids)
     except StorageInteractionError as e:
-        raise ClickException(e) from e
+        raise ClickException(str(e)) from e
 
-def _get_storage(config, context, show_curl):
+def _get_storage(config: StorageConfig,
+                 context: storcom_context.Context,
+                 show_curl: bool) -> BaseStorage:
     if context.storage == 'fcc':
         return FccStorage(config, context, show_curl)
     if context.storage == 'cx':

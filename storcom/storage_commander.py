@@ -4,7 +4,7 @@ from storcom import context, file
 
 @click.group()
 @click.pass_context
-def storcom(click_context):
+def storcom(click_context: click.Context) -> None:
     '''
     A unified way of working with all your storages.
     '''
