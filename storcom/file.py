@@ -60,10 +60,10 @@ def ls(storage: BaseStorage) -> None:
 @click.pass_obj
 def show(storage: BaseStorage, file_id: str) -> None:
     '''
-    Show file details by FILE_ID provided as an argument.
+    Show file details by its FILE_ID.
     '''
     try:
-        print(storage.file_details(file_id))
+        print(storage.show_file(file_id))
     except StorageInteractionError as e:
         raise ClickException(str(e)) from e
 

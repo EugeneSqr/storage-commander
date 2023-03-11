@@ -25,7 +25,7 @@ class BaseStorage():
         self._show_curl = show_curl
 
     @abstractmethod
-    def file_details(self, file_id: str) -> str:
+    def show_file(self, file_id: str) -> str:
         pass
 
     @abstractmethod
@@ -74,7 +74,7 @@ class FccStorage(BaseStorage):
         super().__init__(config, show_curl)
         self._owner = context.user
 
-    def file_details(self, file_id: str) -> str:
+    def show_file(self, file_id: str) -> str:
         try:
             return self._make_request('GET', f'{self._storage_url}/files/{file_id}').text
         except RequestException as e:
@@ -116,7 +116,7 @@ class CxStorage(BaseStorage):
         super().__init__(config, show_curl)
         self._container_sid = context.user
 
-    def file_details(self, file_id: str) -> str:
+    def show_file(self, file_id: str) -> str:
         try:
             return self._make_request('GET', f'{self._get_files_base_url()}/{file_id}').text
         except RequestException as e:
