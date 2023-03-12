@@ -36,9 +36,7 @@ class BaseStorage():
     def delete_files(self, file_ids: List[str]) -> None:
         pass
 
-    def list_files(self) -> str:
-        # TODO: pass filter_fields properly
-        filter_fields={'batch': ''}
+    def list_files(self, filter_fields: Dict[str, str]) -> str:
         return self._request_files_list(filter_fields).text
 
     def list_files_tabular(self,
