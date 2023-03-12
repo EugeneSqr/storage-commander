@@ -24,6 +24,10 @@ class BaseStorage():
         self._storage_url, self._token = config
         self._show_curl = show_curl
 
+    @property
+    def filter_field_names(self) -> List[str]:
+        return []
+
     @abstractmethod
     def show_file(self, file_id: str) -> str:
         pass
@@ -33,11 +37,15 @@ class BaseStorage():
         pass
 
     def list_files(self) -> str:
-        return self._request_files_list().text
+        # TODO: pass filter_fields properly
+        filter_fields={'batch': ''}
+        return self._request_files_list(filter_fields).text
 
-    def list_files_tabular(self, extra_fields: Optional[List[str]]=None) -> TabularFilesList:
+    def list_files_tabular(self,
+                           extra_fields: List[str],
+                           filter_fields: Dict[str, str]) -> TabularFilesList:
         return _list_files_tabular(
-            self._request_files_list(),
+            self._request_files_list(filter_fields),
             [*self._tabular_fields_begin, *(extra_fields or []), *self._tabular_fields_end])
 
     @property
@@ -51,7 +59,7 @@ class BaseStorage():
         pass
 
     @abstractmethod
-    def _request_files_list(self) -> requests.Response:
+    def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
         pass
 
     def _make_request(self,
@@ -74,6 +82,10 @@ class FccStorage(BaseStorage):
         super().__init__(config, show_curl)
         self._owner = context.user
 
+    @property
+    def filter_field_names(self) -> List[str]:
+        return ['batch']
+
     def show_file(self, file_id: str) -> str:
         try:
             return self._make_request('GET', f'{self._storage_url}/files/{file_id}').text
@@ -91,7 +103,7 @@ class FccStorage(BaseStorage):
     def _tabular_fields_end(self) -> List[str]:
         return ['date_changed']
 
-    def _request_files_list(self) -> requests.Response:
+    def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
         try:
             return self._make_request('GET',
                                       f'{self._storage_url}/files',
@@ -133,7 +145,7 @@ class CxStorage(BaseStorage):
     def _tabular_fields_end(self) -> List[str]:
         return ['date_modified']
 
-    def _request_files_list(self) -> requests.Response:
+    def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
         try:
             return self._make_request('GET',
                                       self._get_files_base_url(),

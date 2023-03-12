@@ -32,13 +32,16 @@ def file_group(click_context: click.Context, context_string: str, show_curl: boo
 
 @file_group.command()
 @click.option('--field', '-f', multiple=True, help='Extra tabular field.')
+# TODO: generate filter options dynamically
+@click.option('--batch')
 @click.pass_obj
-def ll(storage: BaseStorage, **kwargs: List[str]) -> None:
+def ll(storage: BaseStorage, field: List[str], **kwargs: str) -> None:
     '''
     List files in a human-readable format.
     '''
     try:
-        tabulated_list = tabulate(*storage.list_files_tabular(extra_fields=kwargs.pop('field')),
+        tabulated_list = tabulate(*storage.list_files_tabular(extra_fields=field,
+                                                              filter_fields=kwargs),
                                   tablefmt='presto')
         print(tabulated_list)
     except StorageInteractionError as e:

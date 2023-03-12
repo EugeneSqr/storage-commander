@@ -8,7 +8,6 @@ import click
 
 from storcom import config
 
-
 @dataclass
 class Context:
     environment: str = ''
