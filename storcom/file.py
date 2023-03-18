@@ -37,14 +37,14 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
                                          show_curl)
 
     @file_group.command()
-    @click.option('--field', '-f', multiple=True, help='Extra tabular field.')
+    @click.option('--column', multiple=True, help='Extra column to output.')
     @click.pass_obj
-    def ll(storage: BaseStorage, field: List[str], **kwargs: str) -> None:
+    def ll(storage: BaseStorage, column: List[str], **kwargs: str) -> None:
         '''
         List files in a human-readable format.
         '''
         try:
-            tabulated_list = tabulate(*storage.list_files_tabular(extra_fields=field,
+            tabulated_list = tabulate(*storage.list_files_tabular(middle_columns=column,
                                                                   filter_fields=kwargs),
                                       tablefmt='presto')
             print(tabulated_list)

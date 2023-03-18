@@ -15,7 +15,7 @@ _THREAD_POOL_SIZE = 5
 _TIMEOUT = 10
 
 File = Dict[str, str]
-TabularFilesList = Tuple[List[List[str]], List[str]]
+TabularFileList = Tuple[List[List[str]], List[str]]
 
 class BaseStorage():
     __metaclass__ = ABCMeta
@@ -40,20 +40,20 @@ class BaseStorage():
         return self._request_files_list(filter_fields).text
 
     def list_files_tabular(self,
-                           extra_fields: List[str],
-                           filter_fields: Dict[str, str]) -> TabularFilesList:
+                           middle_columns: List[str],
+                           filter_fields: Dict[str, str]) -> TabularFileList:
         return _list_files_tabular(
             self._request_files_list(filter_fields),
-            [*self._tabular_fields_begin, *(extra_fields or []), *self._tabular_fields_end])
+            [*self._leading_columns, *(middle_columns or []), *self._trailing_columns])
 
     @property
     @abstractmethod
-    def _tabular_fields_begin(self) -> List[str]:
+    def _leading_columns(self) -> List[str]:
         pass
 
     @property
     @abstractmethod
-    def _tabular_fields_end(self) -> List[str]:
+    def _trailing_columns(self) -> List[str]:
         pass
 
     @abstractmethod
@@ -94,11 +94,11 @@ class FccStorage(BaseStorage):
         ThreadPool(processes=_THREAD_POOL_SIZE).map(self._delete_file, file_ids)
 
     @property
-    def _tabular_fields_begin(self) -> List[str]:
+    def _leading_columns(self) -> List[str]:
         return ['id', 'name', 'batch', 'date_changed']
 
     @property
-    def _tabular_fields_end(self) -> List[str]:
+    def _trailing_columns(self) -> List[str]:
         return ['date_changed']
 
     def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
@@ -136,11 +136,11 @@ class CxStorage(BaseStorage):
         ThreadPool(processes=_THREAD_POOL_SIZE).map(self._delete_file, file_ids)
 
     @property
-    def _tabular_fields_begin(self) -> List[str]:
+    def _leading_columns(self) -> List[str]:
         return ['file_sid', 'name', 'type', 'mime_type']
 
     @property
-    def _tabular_fields_end(self) -> List[str]:
+    def _trailing_columns(self) -> List[str]:
         return ['date_modified']
 
     def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
@@ -174,7 +174,7 @@ class CxAuth(AuthBase):
         return request
 
 def _list_files_tabular(files_list_response: requests.Response,
-                        fields: List[str]) -> TabularFilesList:
+                        fields: List[str]) -> TabularFileList:
     try:
         files: List[File] = files_list_response.json()['items']
     except Exception as e:
