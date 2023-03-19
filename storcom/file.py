@@ -45,7 +45,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         '''
         try:
             tabulated_list = tabulate(*storage.list_files_tabular(middle_columns=column,
-                                                                  filter_fields=kwargs),
+                                                                  filters=kwargs),
                                       tablefmt='presto')
             print(tabulated_list)
         except StorageInteractionError as e:
@@ -58,7 +58,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         List files as raw JSON.
         '''
         try:
-            print(storage.list_files(filter_fields=kwargs))
+            print(storage.list_files(filters=kwargs))
         except StorageInteractionError as e:
             raise ClickException(str(e)) from e
 
@@ -86,9 +86,9 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         except StorageInteractionError as e:
             raise ClickException(str(e)) from e
 
-    for filter_field_name in _get_storage(config, context, _DEFAULT_SHOW_URL).filter_field_names:
-        ll = click.option(f'--{filter_field_name}')(ll)
-        ls = click.option(f'--{filter_field_name}')(ls)
+    for filter_field in _get_storage(config, context, _DEFAULT_SHOW_URL).filter_fields:
+        ll = click.option(f'--{filter_field}')(ll)
+        ls = click.option(f'--{filter_field}')(ls)
 
     return file_group
 

@@ -25,7 +25,7 @@ class BaseStorage():
         self._show_curl = show_curl
 
     @property
-    def filter_field_names(self) -> List[str]:
+    def filter_fields(self) -> List[str]:
         return []
 
     @abstractmethod
@@ -36,14 +36,14 @@ class BaseStorage():
     def delete_files(self, file_ids: List[str]) -> None:
         pass
 
-    def list_files(self, filter_fields: Dict[str, str]) -> str:
-        return self._request_files_list(filter_fields).text
+    def list_files(self, filters: Dict[str, str]) -> str:
+        return self._request_files_list(filters).text
 
     def list_files_tabular(self,
                            middle_columns: List[str],
-                           filter_fields: Dict[str, str]) -> TabularFileList:
+                           filters: Dict[str, str]) -> TabularFileList:
         return _list_files_tabular(
-            self._request_files_list(filter_fields),
+            self._request_files_list(filters),
             [*self._leading_columns, *(middle_columns or []), *self._trailing_columns])
 
     @property
@@ -57,7 +57,7 @@ class BaseStorage():
         pass
 
     @abstractmethod
-    def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
+    def _request_files_list(self, filters: Dict[str, str]) -> requests.Response:
         pass
 
     def _make_request(self,
@@ -81,7 +81,7 @@ class FccStorage(BaseStorage):
         self._owner = context.user
 
     @property
-    def filter_field_names(self) -> List[str]:
+    def filter_fields(self) -> List[str]:
         return ['batch']
 
     def show_file(self, file_id: str) -> str:
@@ -101,7 +101,7 @@ class FccStorage(BaseStorage):
     def _trailing_columns(self) -> List[str]:
         return ['date_changed']
 
-    def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
+    def _request_files_list(self, filters: Dict[str, str]) -> requests.Response:
         try:
             return self._make_request('GET',
                                       f'{self._storage_url}/files',
@@ -143,7 +143,7 @@ class CxStorage(BaseStorage):
     def _trailing_columns(self) -> List[str]:
         return ['date_modified']
 
-    def _request_files_list(self, filter_fields: Dict[str, str]) -> requests.Response:
+    def _request_files_list(self, filters: Dict[str, str]) -> requests.Response:
         try:
             return self._make_request('GET',
                                       self._get_files_base_url(),
