@@ -10,6 +10,7 @@ from requests.auth import AuthBase
 
 from storcom.context import Context
 from storcom.config import StorageConfig
+from storcom.filter import FCC_FILTER_FIELDS, to_fcc_qs_params
 
 _THREAD_POOL_SIZE = 5
 _TIMEOUT = 10
@@ -82,7 +83,7 @@ class FccStorage(BaseStorage):
 
     @property
     def filter_fields(self) -> List[str]:
-        return ['batch']
+        return FCC_FILTER_FIELDS
 
     def show_file(self, file_id: str) -> str:
         try:
@@ -108,6 +109,7 @@ class FccStorage(BaseStorage):
                                       params={
                                           'ordering': '-date_changed',
                                           **self._owner_param(),
+                                          **to_fcc_qs_params(filters),
                                       })
         except RequestException as e:
             raise StorageInteractionError("Can't get list of files.") from e
