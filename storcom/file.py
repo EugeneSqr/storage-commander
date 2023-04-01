@@ -5,10 +5,12 @@ from click import ClickException
 from tabulate import tabulate
 
 from storcom import context as storcom_context
-from storcom.storage import BaseStorage, FccStorage, CxStorage, StorageInteractionError
+from storcom.storage import BaseStorage, FccStorage, CxStorage
 from storcom.config import read_storage_config, ConfigError, StorageConfig
+from storcom.errors import StorcomError, StorageInteractionError
 
 _DEFAULT_SHOW_URL = False
+
 
 def create_group(context: storcom_context.Context) -> click.core.Group:
     try:
@@ -48,7 +50,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
                                                                   filters=kwargs),
                                       tablefmt='presto')
             print(tabulated_list)
-        except StorageInteractionError as e:
+        except StorcomError as e:
             raise ClickException(str(e)) from e
 
     @file_group.command()
@@ -59,7 +61,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         '''
         try:
             print(storage.list_files(filters=kwargs))
-        except StorageInteractionError as e:
+        except StorcomError as e:
             raise ClickException(str(e)) from e
 
     @file_group.command()

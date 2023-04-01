@@ -11,6 +11,7 @@ from requests.auth import AuthBase
 from storcom.context import Context
 from storcom.config import StorageConfig
 from storcom.filter import FCC_FILTER_FIELDS, to_fcc_qs_params
+from storcom.errors import StorageInteractionError
 
 _THREAD_POOL_SIZE = 5
 _TIMEOUT = 10
@@ -163,9 +164,6 @@ class CxStorage(BaseStorage):
 
     def _get_files_base_url(self) -> str:
         return f'{self._storage_url}/core/v2/storage/files'
-
-class StorageInteractionError(Exception):
-    pass
 
 class CxAuth(AuthBase):
     def __init__(self, token: str):
