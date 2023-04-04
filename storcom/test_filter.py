@@ -4,7 +4,7 @@ from storcom import filter as flt
 from storcom.errors import FilterError
 
 def test_supported_fcc_filters() -> None:
-    assert flt.FCC_FILTER_FIELDS == ['batch', 'date_changed', 'date_created']
+    assert flt.FccFilter.values() == ['batch', 'date_changed', 'date_created']
 
 def test_to_fcc_qs_params_ignores_unsupported_filters() -> None:
     assert not flt.to_fcc_qs_params({'smth': 'eq 2'})

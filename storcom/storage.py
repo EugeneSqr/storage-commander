@@ -10,7 +10,7 @@ from requests.auth import AuthBase
 
 from storcom.context import Context
 from storcom.config import StorageConfig
-from storcom.filter import FCC_FILTER_FIELDS, to_fcc_qs_params
+from storcom.filter import FccFilter, to_fcc_qs_params
 from storcom.errors import StorageInteractionError
 
 _THREAD_POOL_SIZE = 5
@@ -84,7 +84,7 @@ class FccStorage(BaseStorage):
 
     @property
     def filter_fields(self) -> List[str]:
-        return FCC_FILTER_FIELDS
+        return FccFilter.values()
 
     def show_file(self, file_id: str) -> str:
         try:
