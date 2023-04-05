@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Union, Optional
 
 import click
 from click import ClickException
@@ -10,6 +10,8 @@ from storcom.config import read_storage_config, ConfigError, StorageConfig
 from storcom.errors import StorcomError, StorageInteractionError
 
 _DEFAULT_SHOW_URL = False
+
+QueryArg = Optional[Union[str, Tuple[str]]]
 
 
 def create_group(context: storcom_context.Context) -> click.core.Group:
@@ -41,7 +43,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
     @file_group.command()
     @click.option('--column', multiple=True, help='Extra column to output.')
     @click.pass_obj
-    def ll(storage: BaseStorage, column: List[str], **kwargs: str) -> None:
+    def ll(storage: BaseStorage, column: List[str], **kwargs: QueryArg) -> None:
         '''
         List files in a human-readable format.
         '''
@@ -55,7 +57,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
 
     @file_group.command()
     @click.pass_obj
-    def ls(storage: BaseStorage, **kwargs: str) -> None:
+    def ls(storage: BaseStorage, **kwargs: QueryArg) -> None:
         '''
         List files as raw JSON.
         '''
@@ -88,9 +90,9 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         except StorageInteractionError as e:
             raise ClickException(str(e)) from e
 
-    for filter_field in _get_storage(config, context, _DEFAULT_SHOW_URL).filter_fields:
-        ll = click.option(f'--{filter_field}')(ll)
-        ls = click.option(f'--{filter_field}')(ls)
+    for f in _get_storage(config, context, _DEFAULT_SHOW_URL).supported_filters:
+        ll = click.option(f'--{f.field}', multiple=f.multiple)(ll)
+        ls = click.option(f'--{f.field}', multiple=f.multiple)(ls)
 
     return file_group
 

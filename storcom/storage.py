@@ -1,7 +1,7 @@
 import sys
 from abc import ABCMeta, abstractmethod
 from multiprocessing.pool import ThreadPool
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Tuple, Optional, Any, Union
 
 import curlify
 import requests
@@ -10,7 +10,7 @@ from requests.auth import AuthBase
 
 from storcom.context import Context
 from storcom.config import StorageConfig
-from storcom.filter import FccFilter, to_fcc_qs_params
+from storcom.filter import Filter, get_fcc_filters, to_fcc_qs_params
 from storcom.errors import StorageInteractionError
 
 _THREAD_POOL_SIZE = 5
@@ -18,6 +18,7 @@ _TIMEOUT = 10
 
 File = Dict[str, str]
 TabularFileList = Tuple[List[List[str]], List[str]]
+QueryArg = Optional[Union[str, Tuple[str]]]
 
 class BaseStorage():
     __metaclass__ = ABCMeta
@@ -27,7 +28,7 @@ class BaseStorage():
         self._show_curl = show_curl
 
     @property
-    def filter_fields(self) -> List[str]:
+    def supported_filters(self) -> List[Filter]:
         return []
 
     @abstractmethod
@@ -38,12 +39,12 @@ class BaseStorage():
     def delete_files(self, file_ids: List[str]) -> None:
         pass
 
-    def list_files(self, filters: Dict[str, str]) -> str:
+    def list_files(self, filters: Dict[str, QueryArg]) -> str:
         return self._request_files_list(filters).text
 
     def list_files_tabular(self,
                            middle_columns: List[str],
-                           filters: Dict[str, str]) -> TabularFileList:
+                           filters: Dict[str, QueryArg]) -> TabularFileList:
         return _list_files_tabular(
             self._request_files_list(filters),
             [*self._leading_columns, *(middle_columns or []), *self._trailing_columns])
@@ -59,7 +60,7 @@ class BaseStorage():
         pass
 
     @abstractmethod
-    def _request_files_list(self, filters: Dict[str, str]) -> requests.Response:
+    def _request_files_list(self, filters: Dict[str, QueryArg]) -> requests.Response:
         pass
 
     def _make_request(self,
@@ -83,8 +84,8 @@ class FccStorage(BaseStorage):
         self._owner = context.user
 
     @property
-    def filter_fields(self) -> List[str]:
-        return FccFilter.values()
+    def supported_filters(self) -> List[Filter]:
+        return get_fcc_filters()
 
     def show_file(self, file_id: str) -> str:
         try:
@@ -103,7 +104,7 @@ class FccStorage(BaseStorage):
     def _trailing_columns(self) -> List[str]:
         return ['date_changed']
 
-    def _request_files_list(self, filters: Dict[str, str]) -> requests.Response:
+    def _request_files_list(self, filters: Dict[str, QueryArg]) -> requests.Response:
         try:
             return self._make_request('GET',
                                       f'{self._storage_url}/files',
@@ -146,7 +147,7 @@ class CxStorage(BaseStorage):
     def _trailing_columns(self) -> List[str]:
         return ['date_modified']
 
-    def _request_files_list(self, filters: Dict[str, str]) -> requests.Response:
+    def _request_files_list(self, filters: Dict[str, QueryArg]) -> requests.Response:
         try:
             return self._make_request('GET',
                                       self._get_files_base_url(),
