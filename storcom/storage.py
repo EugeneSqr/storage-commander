@@ -1,7 +1,7 @@
 import sys
 from abc import ABCMeta, abstractmethod
 from multiprocessing.pool import ThreadPool
-from typing import List, Dict, Tuple, Optional, Any, Union
+from typing import List, Dict, Tuple, Optional, Any
 
 import curlify
 import requests
@@ -12,13 +12,13 @@ from storcom.context import Context
 from storcom.config import StorageConfig
 from storcom.filter import Filter, get_fcc_filters, to_fcc_qs_params
 from storcom.errors import StorageInteractionError
+from storcom.aliases import QueryArg
 
 _THREAD_POOL_SIZE = 5
 _TIMEOUT = 10
 
 File = Dict[str, str]
 TabularFileList = Tuple[List[List[str]], List[str]]
-QueryArg = Optional[Union[str, Tuple[str]]]
 
 class BaseStorage():
     __metaclass__ = ABCMeta

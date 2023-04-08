@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union, Optional
+from typing import List
 
 import click
 from click import ClickException
@@ -8,10 +8,9 @@ from storcom import context as storcom_context
 from storcom.storage import BaseStorage, FccStorage, CxStorage
 from storcom.config import read_storage_config, ConfigError, StorageConfig
 from storcom.errors import StorcomError, StorageInteractionError
+from storcom.aliases import QueryArg
 
 _DEFAULT_SHOW_URL = False
-
-QueryArg = Optional[Union[str, Tuple[str]]]
 
 
 def create_group(context: storcom_context.Context) -> click.core.Group:

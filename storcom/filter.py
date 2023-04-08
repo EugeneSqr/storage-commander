@@ -1,18 +1,11 @@
 from dataclasses import dataclass, fields
-from typing import Dict, Tuple, List, Callable, Optional, Union
+from typing import Dict, Tuple, List, Callable, Optional, cast
 
 from dateutil.parser import isoparse
 
 from storcom.errors import FilterError
+from storcom.aliases import QueryArg
 
-
-# TODO: move to aliases.py and reuse
-QueryArg = Optional[Union[str, Tuple[str]]]
-
-class FccFilterField:
-    BATCH: str = 'batch'
-    DATE_CHANGED: str = 'date_changed'
-    DATE_CREATED: str = 'date_created'
 
 @dataclass
 class FccOperator:
@@ -35,17 +28,13 @@ class FccOperator:
 class Filter:
     field: str = ''
     multiple: bool = False
-    input_adapter: Optional[Callable[[str], str]] = None
+    input_adapter: Callable[[str], str] = lambda x: x
 
 def get_fcc_filters() -> List[Filter]:
     return [
-        Filter(FccFilterField.BATCH),
-        Filter(FccFilterField.DATE_CHANGED,
-               multiple=True,
-               input_adapter=_to_iso_datetime),
-        Filter(FccFilterField.DATE_CREATED,
-               multiple=True,
-               input_adapter=_to_iso_datetime),
+        Filter("batch"),
+        Filter("date_changed", multiple=True, input_adapter=_to_iso_datetime),
+        Filter("date_created", multiple=True, input_adapter=_to_iso_datetime),
     ]
 
 def to_fcc_qs_params(query_args: Dict[str, QueryArg]) -> Dict[str, str]:
@@ -55,30 +44,41 @@ def to_fcc_qs_params(query_args: Dict[str, QueryArg]) -> Dict[str, str]:
     return {k: v for k, v in qs_params.items() if k != ''}
 
 def _to_fcc_qs_param(fcc_filter: Filter, query_arg: QueryArg) -> Tuple[str, str]:
-    empty_qs_param = ('', '')
-    if not query_arg:
-        return empty_qs_param
-    print('>>>>', query_arg, len(query_arg))
-    if fcc_filter.multiple and len(query_arg) > 1:
-        # TODO: not supported so far
-        return empty_qs_param
-    assert isinstance(query_arg, str)
-    split_query_arg = query_arg.split(' ', 1)
+    return (
+        _to_fcc_qs_param_multivalue(fcc_filter, cast(Tuple[str], query_arg)) if fcc_filter.multiple
+        else _to_fcc_qs_param_single_value(fcc_filter, cast(Optional[str], query_arg))
+    )
+
+def _to_fcc_qs_param_multivalue(fcc_filter: Filter, values: Tuple[str]) -> Tuple[str, str]:
+    if not values:
+        return '', ''
+    # TODO: implement true multiple
+    value = values[0]
+    split_query_arg = value.split(' ', 1)
     param_operator, param_value = FccOperator.EQ, ''
     if len(split_query_arg) == 1:
         param_value = split_query_arg[0]
     else:
         param_operator, param_value = split_query_arg
-    return _to_fcc_filter_expression(fcc_filter.field, param_operator, param_value)
+    return _to_fcc_filter_expression(fcc_filter, param_operator, param_value)
 
-def _to_fcc_filter_expression(field: str, operator: str, value: str) -> Tuple[str, str]:
+def _to_fcc_qs_param_single_value(fcc_filter: Filter, value: Optional[str]) -> Tuple[str, str]:
+    if not value:
+        return '', ''
+    split_query_arg = value.split(' ', 1)
+    param_operator, param_value = FccOperator.EQ, ''
+    if len(split_query_arg) == 1:
+        param_value = split_query_arg[0]
+    else:
+        param_operator, param_value = split_query_arg
+    return _to_fcc_filter_expression(fcc_filter, param_operator, param_value)
+
+def _to_fcc_filter_expression(fcc_filter: Filter, operator: str, value: str) -> Tuple[str, str]:
     operator = operator.lower()
-    value = value.strip('\'"')
-    date_fields = [FccFilterField.DATE_CHANGED, FccFilterField.DATE_CREATED]
-    value = _to_iso_datetime(value) if field in date_fields else value
+    value = fcc_filter.input_adapter(value.strip('\'"'))
     if operator not in FccOperator.values():
         raise FilterError(f'Filter operator {operator} is not supported')
-    field = field if operator == FccOperator.EQ else f'{field}__{operator}'
+    field = fcc_filter.field if operator == FccOperator.EQ else f'{fcc_filter.field}__{operator}'
     return field, value
 
 def _to_iso_datetime(date_filter_value: str) -> str:

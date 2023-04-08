@@ -15,8 +15,8 @@ def test_to_fcc_qs_params_ignores_unsupported_filters() -> None:
 def test_to_fcc_qs_params_ignores_empty_single_filters(empty: Optional[str]) -> None:
     assert not flt.to_fcc_qs_params({'batch': empty})
 
-@pytest.mark.parametrize('empty', [(), None])
-def test_to_fcc_qs_params_ignores_empty_multiple_filters(empty: Optional[Tuple[str]]) -> None:
+def test_to_fcc_qs_params_ignores_empty_multiple_filters() -> None:
+    empty: Tuple[()] = ()
     assert not flt.to_fcc_qs_params({'date_changed': empty})
 
 @pytest.mark.parametrize('provided, expected', [
@@ -56,14 +56,12 @@ def test_to_fcc_qs_params_datetime_invalid_value_raises_error(invalid_value: Tup
     with pytest.raises(FilterError):
         flt.to_fcc_qs_params({'date_changed': invalid_value})
 
-# TODO: fix multiple
 @pytest.mark.parametrize('provided, expected', {
-    ('2023-01-01', '2023-01-01 00:00:00')
+    (('2023-01-01',), '2023-01-01 00:00:00')
 })
 def test_to_fcc_qs_params_datetime_partial_datetime_is_ok(provided: str, expected: str) -> None:
     assert flt.to_fcc_qs_params({'date_changed': provided}) == {'date_changed': expected}
 
-# TODO: fix_multiple
 def test_to_fcc_qs_params_datetime_full_is_ok() -> None:
-    actual = flt.to_fcc_qs_params({'date_changed': '2023-02-14T10:09:07.060011Z'})
+    actual = flt.to_fcc_qs_params({'date_changed': ('2023-02-14T10:09:07.060011Z',)})
     assert actual == {'date_changed': '2023-02-14 10:09:07.060011+00:00'}
