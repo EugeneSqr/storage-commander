@@ -102,7 +102,7 @@ class FccStorage(BaseStorage):
 
     @property
     def _trailing_columns(self) -> List[str]:
-        return ['date_changed']
+        return ['date_created']
 
     def _request_files_list(self, filters: Dict[str, QueryArg]) -> requests.Response:
         try:
