@@ -9,6 +9,12 @@ from dateutil.parser import isoparse
 from storcom.errors import FilterError
 from storcom.aliases import QueryArg
 
+_timedelta_parameter_mapping = {
+    's': 'seconds',
+    'm': 'minutes',
+    'h': 'hours',
+    'd': 'days',
+}
 
 @dataclass
 class FccOperator:
@@ -82,21 +88,17 @@ def _to_iso_datetime(datetime_value: str) -> str:
         raise FilterError(f"Incorrect filter value: {datetime_value}") from e
 
 def _to_delta_datetime(datetime_value: str) -> Optional[str]:
+    # TODO: support reasonable defaults for timedelta format: now+1 (as now+1d), now (as now+0)
     match = re.match(r"^now([+-]\d+)(ms|s|m|h|d)$", datetime_value)
     if not match:
         return None
     return str(datetime.utcnow() + timedelta(**_to_timedelta_kwargs(*match.groups())))
 
 def _to_timedelta_kwargs(offset: str, unit_of_time: str) -> Dict[str, int]:
+    parsed_offset = int(offset)
     if unit_of_time == 'ms':
-        return {'microseconds': int(offset) * 1000}
-    delta_param_name = {
-        's': 'seconds',
-        'm': 'minutes',
-        'h': 'hours',
-        'd': 'days',
-    }[unit_of_time]
-    return { delta_param_name: int(offset) }
+        return { 'microseconds': parsed_offset * 1000 }
+    return { _timedelta_parameter_mapping[unit_of_time]: parsed_offset }
 
 def _merge_dictionaries(dictionaries: Iterable[Dict[str, str]]) -> Dict[str, str]:
     return reduce(lambda accumulated, new: dict(accumulated, **new), dictionaries, {})

@@ -1,9 +1,29 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable, Iterator, ContextManager
+from dataclasses import dataclass
+from contextlib import contextmanager
+from unittest.mock import Mock
+from datetime import datetime
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from storcom import filter as flt
 from storcom.errors import FilterError
+
+@dataclass
+class Arrangements:
+    utcnow: Callable[[datetime], ContextManager[None]]
+
+@pytest.fixture(name='arrange')
+def fixture_arrange(monkeypatch: MonkeyPatch) -> Arrangements:
+    @contextmanager
+    def arrange_utcnow(expected: datetime) -> Iterator[None]:
+        mock = Mock(return_value=expected)
+        monkeypatch.setattr(flt, "datetime", Mock(utcnow=mock))
+        yield
+        mock.assert_called_once()
+
+    return Arrangements(utcnow=arrange_utcnow)
 
 def test_supported_fcc_filters() -> None:
     assert [f.field for f in flt.get_fcc_filters()] == ['batch', 'date_changed', 'date_created']
@@ -74,4 +94,18 @@ def test_to_fcc_qs_params_multiple_gt_lt_datetime() -> None:
         'date_changed__lt': '2023-02-02 00:00:00',
     }
 
-# TODO: add timedelta tests
+@pytest.mark.parametrize('delta, shifted', [
+    ('now+1d', '2023-02-03 02:02:02.222222'),
+    ('now-1d', '2023-02-01 02:02:02.222222'),
+    ('now+1h', '2023-02-02 03:02:02.222222'),
+    ('now-1h', '2023-02-02 01:02:02.222222'),
+    ('now+1m', '2023-02-02 02:03:02.222222'),
+    ('now-1m', '2023-02-02 02:01:02.222222'),
+    ('now+1s', '2023-02-02 02:02:03.222222'),
+    ('now-1s', '2023-02-02 02:02:01.222222'),
+    ('now+1ms', '2023-02-02 02:02:02.223222'),
+    ('now-1ms', '2023-02-02 02:02:02.221222'),
+])
+def test_to_fcc_qs_params_timedeltas(arrange: Arrangements, delta: str, shifted: str) -> None:
+    with arrange.utcnow(datetime(2023, 2, 2, 2, 2, 2, 222222)):
+        assert flt.to_fcc_qs_params({'date_changed': (delta,)}) == {'date_changed': shifted}
