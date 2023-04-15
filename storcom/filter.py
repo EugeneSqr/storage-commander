@@ -1,5 +1,7 @@
+import re
+from datetime import datetime, timedelta
 from dataclasses import dataclass, fields
-from typing import Dict, Tuple, List, Callable, cast, Iterable
+from typing import Dict, Tuple, List, Callable, cast, Iterable, Optional
 from functools import reduce
 
 from dateutil.parser import isoparse
@@ -68,17 +70,33 @@ def _to_fcc_qs_param_single_value(fcc_filter: Filter, query_arg_value: str) -> D
     field = fcc_filter.field if operator == FccOperator.EQ else f'{fcc_filter.field}__{operator}'
     return {field: value}
 
-def _to_iso_datetime(date_filter_value: str) -> str:
-    if not date_filter_value:
-        return date_filter_value
-    date_filter_value = date_filter_value.lower()
-    if date_filter_value == "now":
-        # TODO: parse offsets like now+1d, now-1h
-        return date_filter_value
+def _to_iso_datetime(datetime_value: str) -> str:
+    if not datetime_value:
+        return datetime_value
+    delta_datetime = _to_delta_datetime(datetime_value)
+    if delta_datetime:
+        return delta_datetime
     try:
-        return str(isoparse(date_filter_value))
+        return str(isoparse(datetime_value))
     except ValueError as e:
-        raise FilterError(f"Incorrect filter value: {date_filter_value}") from e
+        raise FilterError(f"Incorrect filter value: {datetime_value}") from e
+
+def _to_delta_datetime(datetime_value: str) -> Optional[str]:
+    match = re.match(r"^now([+-]\d+)(ms|s|m|h|d)$", datetime_value)
+    if not match:
+        return None
+    return str(datetime.utcnow() + timedelta(**_to_timedelta_kwargs(*match.groups())))
+
+def _to_timedelta_kwargs(offset: str, unit_of_time: str) -> Dict[str, int]:
+    if unit_of_time == 'ms':
+        return {'microseconds': int(offset) * 1000}
+    delta_param_name = {
+        's': 'seconds',
+        'm': 'minutes',
+        'h': 'hours',
+        'd': 'days',
+    }[unit_of_time]
+    return { delta_param_name: int(offset) }
 
 def _merge_dictionaries(dictionaries: Iterable[Dict[str, str]]) -> Dict[str, str]:
     return reduce(lambda accumulated, new: dict(accumulated, **new), dictionaries, {})

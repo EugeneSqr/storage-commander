@@ -73,3 +73,5 @@ def test_to_fcc_qs_params_multiple_gt_lt_datetime() -> None:
         'date_changed__gt': '2023-01-01 00:00:00',
         'date_changed__lt': '2023-02-02 00:00:00',
     }
+
+# TODO: add timedelta tests
