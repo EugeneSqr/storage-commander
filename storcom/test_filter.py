@@ -109,3 +109,16 @@ def test_to_fcc_qs_params_multiple_gt_lt_datetime() -> None:
 def test_to_fcc_qs_params_timedeltas(arrange: Arrangements, delta: str, shifted: str) -> None:
     with arrange.utcnow(datetime(2023, 2, 2, 2, 2, 2, 222222)):
         assert flt.to_fcc_qs_params({'date_changed': (delta,)}) == {'date_changed': shifted}
+
+@pytest.mark.parametrize('delta, shifted', [
+    ('now', '2023-02-02 02:02:02.222222'),
+    ('now+0', '2023-02-02 02:02:02.222222'),
+    ('now-0', '2023-02-02 02:02:02.222222'),
+    ('now+1', '2023-02-03 02:02:02.222222'),
+    ('now-1', '2023-02-01 02:02:02.222222'),
+])
+def test_to_fcc_qs_params_timedeltas_defaults(arrange: Arrangements,
+                                              delta: str,
+                                              shifted: str) -> None:
+    with arrange.utcnow(datetime(2023, 2, 2, 2, 2, 2, 222222)):
+        assert flt.to_fcc_qs_params({'date_changed': (delta,)}) == {'date_changed': shifted}

@@ -88,14 +88,14 @@ def _to_iso_datetime(datetime_value: str) -> str:
         raise FilterError(f"Incorrect filter value: {datetime_value}") from e
 
 def _to_delta_datetime(datetime_value: str) -> Optional[str]:
-    # TODO: support reasonable defaults for timedelta format: now+1 (as now+1d), now (as now+0)
-    match = re.match(r"^now([+-]\d+)(ms|s|m|h|d)$", datetime_value)
+    match = re.match(r"^now([+-]\d+)?(ms|s|m|h|d)?$", datetime_value)
     if not match:
         return None
     return str(datetime.utcnow() + timedelta(**_to_timedelta_kwargs(*match.groups())))
 
-def _to_timedelta_kwargs(offset: str, unit_of_time: str) -> Dict[str, int]:
-    parsed_offset = int(offset)
+def _to_timedelta_kwargs(offset: Optional[str], unit_of_time: Optional[str]) -> Dict[str, int]:
+    parsed_offset = int(offset or '0')
+    unit_of_time = unit_of_time or 'd'
     if unit_of_time == 'ms':
         return { 'microseconds': parsed_offset * 1000 }
     return { _timedelta_parameter_mapping[unit_of_time]: parsed_offset }
