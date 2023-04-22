@@ -1,7 +1,7 @@
 import sys
 from abc import ABCMeta, abstractmethod
 from multiprocessing.pool import ThreadPool
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Dict, Tuple, Any
 
 import curlify
 import requests
@@ -66,7 +66,7 @@ class BaseStorage():
     def _make_request(self,
                       method: str,
                       url: str,
-                      **kwargs: Optional[Any]) -> requests.Response:
+                      **kwargs: Any) -> requests.Response:
         response = requests.request(method,
                                     url,
                                     allow_redirects=True,
