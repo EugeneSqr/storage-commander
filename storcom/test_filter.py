@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from datetime import datetime
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
+from pytest import MonkeyPatch
 
 from storcom import filter as flt
 from storcom.errors import FilterError
