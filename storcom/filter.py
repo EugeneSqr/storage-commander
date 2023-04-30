@@ -1,6 +1,7 @@
 import re
+from enum import Enum
 from datetime import datetime, timedelta
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from typing import Dict, Tuple, List, Callable, cast, Iterable, Optional
 from functools import reduce
 
@@ -16,22 +17,12 @@ _timedelta_parameter_mapping = {
     'd': 'days',
 }
 
-@dataclass
-class FccOperator:
-    # Using simple dataclass, because no decent Enum for python3.6 is available
-    # StrEnum is available in standard library only in python 3.11
-    # StrEnum backports aren't mypy compatible at least in python3.6
-    # FccOperator(str, Enum) doesn't work well with mypy when it comes to assigning enum values
-    # like o = FccOperator.EQ - FccOpeartor.EQ.value has to be used instead
+class FccOperator(str, Enum):
     EQ: str = 'eq'
     LT: str = 'lt'
     GT: str = 'gt'
     LTE: str = 'lte'
     GTE: str = 'gte'
-
-    @classmethod
-    def values(cls) -> List[str]:
-        return [f.default for f in fields(cls)]
 
 @dataclass
 class Filter:
@@ -64,14 +55,14 @@ def _to_fcc_qs_param_multivalue(fcc_filter: Filter, values: Tuple[str]) -> Dict[
 
 def _to_fcc_qs_param_single_value(fcc_filter: Filter, query_arg_value: str) -> Dict[str, str]:
     split_query_arg = query_arg_value.split(' ', 1)
-    operator, value = FccOperator.EQ, ''
+    operator, value = FccOperator.EQ.value, ''
     if len(split_query_arg) == 1:
         value = split_query_arg[0]
     else:
         operator, value = split_query_arg
     operator = operator.lower()
     value = fcc_filter.input_adapter(value.strip('\'"'))
-    if operator not in FccOperator.values():
+    if operator not in [op.value for op in FccOperator]:
         raise FilterError(f'Filter operator {operator} is not supported')
     field = fcc_filter.field if operator == FccOperator.EQ else f'{fcc_filter.field}__{operator}'
     return {field: value}
