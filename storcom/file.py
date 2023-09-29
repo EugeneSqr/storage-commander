@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from storcom import context as storcom_context
 from storcom.storage import BaseStorage, FccStorage, CxStorage
-from storcom.config import read_storage_config, ConfigError, StorageConfig
+from storcom.config import read_storage_config, ConfigError
 from storcom.errors import StorcomError, StorageInteractionError
 from storcom.aliases import QueryArg
 
@@ -14,11 +14,6 @@ _DEFAULT_SHOW_URL = False
 
 
 def create_group(context: storcom_context.Context) -> click.core.Group:
-    try:
-        config = read_storage_config(context)
-    except ConfigError as e:
-        raise ClickException(e.message) from e
-
     @click.group('file')
     @click.option('--context_string',
                   '-c',
@@ -35,14 +30,13 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         '''
         Work with files.
         '''
-        click_context.obj = _get_storage(config,
-                                         storcom_context.parse(context_string) or click_context.obj,
+        click_context.obj = _get_storage(storcom_context.parse(context_string) or click_context.obj,
                                          show_curl)
 
     @file_group.command()
     @click.option('--column', multiple=True, help='Extra column to output.')
     @click.pass_obj
-    def ll(storage: BaseStorage, column: List[str], **kwargs: QueryArg) -> None:
+    def ll(storage: BaseStorage, /, column: List[str], **kwargs: QueryArg) -> None:
         '''
         List files in a human-readable format.
         '''
@@ -56,7 +50,7 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
 
     @file_group.command()
     @click.pass_obj
-    def ls(storage: BaseStorage, **kwargs: QueryArg) -> None:
+    def ls(storage: BaseStorage, /, **kwargs: QueryArg) -> None:
         '''
         List files as raw JSON.
         '''
@@ -89,15 +83,18 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         except StorageInteractionError as e:
             raise ClickException(str(e)) from e
 
-    for f in _get_storage(config, context, _DEFAULT_SHOW_URL).supported_filters:
+    for f in _get_storage(context, _DEFAULT_SHOW_URL).supported_filters:
         ll = click.option(f'--{f.field}', multiple=f.multiple)(ll)
         ls = click.option(f'--{f.field}', multiple=f.multiple)(ls)
 
     return file_group
 
-def _get_storage(config: StorageConfig,
-                 context: storcom_context.Context,
-                 show_curl: bool) -> BaseStorage:
+def _get_storage(context: storcom_context.Context, show_curl: bool) -> BaseStorage:
+    try:
+        config = read_storage_config(context)
+    except ConfigError as e:
+        raise ClickException(e.message) from e
+
     if context.storage == 'fcc':
         return FccStorage(config, context, show_curl)
     if context.storage == 'cx':

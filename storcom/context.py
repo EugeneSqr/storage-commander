@@ -47,7 +47,7 @@ def context_group() -> None:
 @click.option('--user', help='Name of the user which owns the files.')
 @click.argument('context_string', required=False, shell_complete=complete_with_shortcut)
 @click.pass_obj
-def use(storcom_ctx: Context, context_string: str, **kwargs: Dict[str, str]) -> None:
+def use(storcom_ctx: Context, /, context_string: str, **kwargs: Dict[str, str]) -> None:
     '''
     Set context with CONTEXT_STRING or by setting each part separately.
     The CONTEXT_STRING can be either a shortcut or a serialized context.
