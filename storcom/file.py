@@ -30,8 +30,12 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         '''
         Work with files.
         '''
-        click_context.obj = _get_storage(storcom_context.parse(context_string) or click_context.obj,
-                                         show_curl)
+        context = storcom_context.parse(context_string) or click_context.obj
+        try:
+            click_context.obj = _get_storage(context, show_curl)
+        except ConfigError as e:
+            raise ClickException(e.message) from e
+
 
     @file_group.command()
     @click.option('--column', multiple=True, help='Extra column to output.')
@@ -83,18 +87,19 @@ def create_group(context: storcom_context.Context) -> click.core.Group:
         except StorageInteractionError as e:
             raise ClickException(str(e)) from e
 
-    for f in _get_storage(context, _DEFAULT_SHOW_URL).supported_filters:
-        ll = click.option(f'--{f.field}', multiple=f.multiple)(ll)
-        ls = click.option(f'--{f.field}', multiple=f.multiple)(ls)
+    try:
+        for f in _get_storage(context, _DEFAULT_SHOW_URL).supported_filters:
+            ll = click.option(f'--{f.field}', multiple=f.multiple)(ll)
+            ls = click.option(f'--{f.field}', multiple=f.multiple)(ls)
+    except ConfigError:
+        # create the file group even if the config is corrupt, this way we give an opportunity
+        # to fix it using commands from the context group
+        pass
 
     return file_group
 
 def _get_storage(context: storcom_context.Context, show_curl: bool) -> BaseStorage:
-    try:
-        config = read_storage_config(context)
-    except ConfigError as e:
-        raise ClickException(e.message) from e
-
+    config = read_storage_config(context)
     if context.storage == 'fcc':
         return FccStorage(config, context, show_curl)
     if context.storage == 'cx':
